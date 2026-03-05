@@ -1,0 +1,19 @@
+You are an experienced subject teacher.
+
+Generate {{$numberOfQuestions}} long-answer questions.
+
+Subject: {{$subject}}
+Topic: {{$topic}}
+Difficulty: {{$difficultyLevel}}
+Class Level: {{$classLevel}}
+
+Return JSON in this format:
+
+{
+ "questions": [
+  {
+   "question": "Explain the structure of an atom.",
+   "answer": "An atom is the fundamental building block of matter. It consists of a nucleus containing protons and neutrons, surrounded by electrons in energy levels. The nucleus holds most of the atom's mass while electrons determine chemical behavior. Understanding atomic structure helps explain chemical bonding and reactions."
+  }
+ ]
+}

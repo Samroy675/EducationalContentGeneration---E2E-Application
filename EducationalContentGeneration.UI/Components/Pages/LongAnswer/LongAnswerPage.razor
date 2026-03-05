@@ -1,0 +1,94 @@
+﻿@page "/long-answer"
+@using EducationalContentGeneration.Core.Enums
+@using EducationalContentGeneration.Core.Models
+@using EducationalContentGeneration.UI.Components.Services
+@inject MockDataService MockService
+
+<PageTitle>Long Answer Generator</PageTitle>
+
+<h3>Long Answer Generator</h3>
+
+<div class="page-layout">
+    <div class="form-container">
+        <EditForm Model="@request" OnSubmit="@GenerateLongAnswer" FormName="longAnswerForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label>Subject:</label>
+                <InputText @bind-Value="request.Subject" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>Topic:</label>
+                <InputText @bind-Value="request.Topic" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>Class Level:</label>
+
+                <InputSelect @bind-Value="request.ClassLevel" class="form-control">
+                    <option value="">--Select Class</option>
+                    @foreach (EducationClass level in Enum.GetValues(typeof(EducationClass)))
+                    {
+                        <option value="@level">@level</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="form-group">
+                <label>Difficulty:</label>
+
+                <InputSelect @bind-Value="request.Difficulty" class="form-control">
+                    <option value="">--Select Difficulty</option>
+                    @foreach (DifficultyLevel level in Enum.GetValues(typeof(DifficultyLevel)))
+                    {
+                        <option value="@level">@level</option>
+                    }
+                </InputSelect>
+            </div>
+
+    <div class="form-group">
+        <label>Count:</label>
+        <InputNumber @bind-Value="request.NumberOfQuestions" class="form-control" />
+    </div>
+
+    <br />
+
+    <button type="submit" class="btn btn-primary" disabled="@isLoading">
+        @(isLoading ? "Generating..." : "Generate")
+    </button>
+    </EditForm>
+</div>
+
+    @if (isLoading)
+    {
+        <p>Generating Long answer questions... </p>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(result))
+    {
+    <div class="result-box">
+        <pre>@result</pre>
+    </div>
+    }
+</div>
+
+@code {
+    private ContentRequest request = new();
+    private string? result;
+    private bool isLoading = false;
+
+    private async Task GenerateLongAnswer()
+    {
+        isLoading = true;
+        result = null;
+
+        await Task.Delay(1000);
+
+        result = MockService.GenerateLongAnswer(request);
+
+        isLoading = false;
+    }
+
+}

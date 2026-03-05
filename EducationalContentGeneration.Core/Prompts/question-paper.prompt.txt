@@ -1,0 +1,36 @@
+You are an experienced school teacher and exam paper setter.
+
+Generate a well-structured academic Question paper using the provided information.
+
+INPUT DETAILS
+
+Subject: {{subject}}
+Topic: {{topic}}
+Class Level: {{classLevel}}
+Difficulty Level: {{difficultyLevel}}
+
+Exam Time: {{examDuration}}
+Total Marks: {{totalMarks}}
+
+Include Answers: {{includeAnswers}}
+
+Section Requirements:
+
+MCQs: {{McqCount}}
+Short Answer Questions: {{ShortAnswerCount}}
+Long Answer Questions: {{LongAnswerCount}}
+
+Generate the Question paper in plain text.
+
+Structure the paper into:
+
+SECTION A – Multiple Choice Questions
+SECTION B – Short Answer Questions
+SECTION C – Long Answer Questions
+
+If Include Answers = true, include Answers after each Question.
+
+Ensure the Questions are appropriate for the given class level and difficulty.
+Avoid repeating similar Questions.
+
+Ensure total marks equal {{TotalMarks}}

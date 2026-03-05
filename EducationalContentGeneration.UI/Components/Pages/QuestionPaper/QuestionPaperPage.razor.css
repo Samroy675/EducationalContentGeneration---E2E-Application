@@ -1,0 +1,70 @@
+﻿.form-container {
+    max-width: 500px;
+    padding: 20px;
+    width: 420px;
+}
+
+.form-group {
+    margin-bottom: 14px;
+}
+
+.page-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start
+}
+
+label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+input, select {
+    width: 100%;
+    padding: 8px;
+    font-size: 14px;
+}
+
+button {
+    padding: 8px 16px;
+    font-weight: 600;
+    cursor: pointer;
+    background-color: #0078d4;
+    color: white;
+    border: none;
+    border-radius: 4px;
+}
+
+    button:hover {
+        background-color: #005ea6;
+    }
+
+.result-box {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #f5f5f5;
+    border-left: 4px solid #0078d4;
+    white-space: pre-wrap;
+    flex: 1;
+}
+
+.qp-page {
+    display: flex;
+    justify-content: center;
+}
+
+.qp-card {
+    background: white;
+    padding: 30px, 40px;
+    width: 100%;
+    max-width: 700px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+}
+
+.page-title {
+    margin-bottom: 25px;
+    font-weight: 600;
+    color: #1A237E;
+}

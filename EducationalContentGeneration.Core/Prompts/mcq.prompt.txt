@@ -1,0 +1,27 @@
+You are a question generation engine.
+
+Generate {{$numberOfQuestions}} multiple choice questions.
+
+Subject: {{$subject}}
+Topic: {{$topic}}
+Difficulty: {{$difficultyLevel}}
+Class Level: {{$classLevel}}
+
+Return JSON in this format.
+
+
+{
+  "questions": [
+    {
+      "question": "What is the smallest unit of matter",
+      "options": [
+      "Molecule",
+      "Atom",
+      "Compound",
+      "Ion"
+      ],
+      "correctAnswer": "Atom",
+      "explanation": "An atom is the smallest unit of an element"
+    }
+  ]
+}

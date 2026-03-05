@@ -1,0 +1,126 @@
+﻿@page "/"
+@page "/mcq"
+
+@using EducationalContentGeneration.Core.Enums
+@using EducationalContentGeneration.Core.Models
+@using EducationalContentGeneration.UI.Components.Services
+@using Microsoft.AspNetCore.Components.Forms
+@inject MockDataService MockService
+
+<PageTitle>EducationalContentGeneration</PageTitle>
+
+<div class="command-center">
+    <div class="page-header">
+        <h2>MCQ Generator</h2>
+        <div class="actions">
+            <button class="action-btn"><i class="bi bi-clipboard-check"></i> Copy to Clipboard</button>
+            <button class="action-btn"><i class="bi bi-box-arrow-up-right"></i> Export with Answer Key</button>
+            <button class="action-btn"><i class="bi bi-printer"></i> Print Draft</button>
+        </div>
+    </div>
+
+    <div class="workspace">
+        <!-- LEFT PANEL -->
+        <div class="config-panel card">
+            <h4>1. Structure & Constraints</h4> 
+
+            <div class="form-group">
+                <label>Subject</label>
+                <InputText @bind-Value=request.Subject class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>Topic</label>
+                <InputText @bind-Value=request.Topic class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>Grade Level</label>
+                <InputSelect @bind-Value="request.ClassLevel" class="form-control">
+
+                    @foreach(EducationClass level in Enum.GetValues(typeof(EducationClass)))
+                    {
+                        <option value="@level">@level</option>
+                    }
+                    </InputSelect>
+            </div>
+
+            <div class="form-group">
+                <label>Difficulty</label>
+                <InputSelect @bind-Value="request.Difficulty" class="form-control">
+
+                    @foreach (DifficultyLevel level in Enum.GetValues(typeof(DifficultyLevel)))
+                    {
+                        <option value="@level">@level</option>
+                    }
+                </InputSelect>
+            </div>
+
+            <div class="form-group">
+                <label>Question Count</label>
+                <InputNumber @bind-Value="request.NumberOfQuestions" class="form-control" />
+            </div>
+
+            <button class="generate-btn" @onclick="GenerateMcq" disabled="@isLoading">
+                @(isLoading ? "Generating..." : "Generate Questions")
+            </button>
+        </div>
+
+        <!-- RIGHT PANEL -->
+        <div class="preview-panel card">
+            <h4>Preview</h4>
+            @if(isLoading)
+            {
+                <p>Generating MCQs...</p>
+            }
+            
+            @if(questions.Any())
+            {
+                @foreach(var q in questions)
+                {
+                    <div class="mcq-card">
+                        <p class="question-title">
+                            <b>@q.Number.</b> @q.Question
+                        </p>
+
+                        @for(int i=0;i<q.Options.Count;i++)
+                        {
+                            <div class="option">
+                                @(Convert.ToChar(65+i))) @q.Options[i]
+                            </div>
+                        }
+
+                        <div class="answer-box" >
+                            <i class="bi bi-check-circle-fill text-success"></i>
+                            Answer: @q.CorrectAnswer
+                        </div>
+
+                        <div class="explanation-box">
+                            <b>Explanation: </b> @q.Explanation
+                        </div>
+
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<McqQuestionResponse> questions = new();
+    private ContentRequest request = new();
+    private bool isLoading = false;
+
+    private async Task GenerateMcq()
+    {
+        isLoading = true;
+
+        // Simulate latency
+        await Task.Delay(1000);
+
+        // Get result from the mock service
+        questions = MockService.GenerateMcq(request);
+
+        isLoading = false;
+    }
+}
