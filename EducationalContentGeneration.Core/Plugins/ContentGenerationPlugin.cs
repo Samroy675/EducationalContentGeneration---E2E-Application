@@ -48,12 +48,10 @@ namespace EducationalContentGeneration.Core.Plugins
 
             var response = await ExecutePromptAsync(template, args);
 
-            var mcqResponse = JsonSerializer.Deserialize<McqResponse>(response);
+            Console.WriteLine("\nJsonResponse");
+            Console.WriteLine(response);
 
-            return JsonSerializer.Serialize(mcqResponse, new JsonSerializerOptions
-            {
-                WriteIndented = true
-            });
+            return response!;
         }
 
         [KernelFunction("GenerateShortAnswer")]
@@ -83,7 +81,12 @@ namespace EducationalContentGeneration.Core.Plugins
                 ["numberOfQuestions"] = numberOfQuestions
             };
 
-            return await ExecutePromptAsync(template, args);
+            var response = await ExecutePromptAsync(template, args);
+
+            Console.WriteLine("\nJsonResponse");
+            Console.WriteLine(response);
+
+            return response!;
         }
 
         [KernelFunction("GenerateLongAnswer")]
@@ -113,7 +116,12 @@ namespace EducationalContentGeneration.Core.Plugins
                 ["numberOfQuestions"] = numberOfQuestions
             };
 
-            return await ExecutePromptAsync(template, args);
+            var response = await ExecutePromptAsync(template, args);
+
+            Console.WriteLine("\nJsonResponse");
+            Console.WriteLine(response);
+
+            return response!;
         }
 
         [KernelFunction("EvaluateExplanation")]
@@ -129,6 +137,11 @@ namespace EducationalContentGeneration.Core.Plugins
 
             if (string.IsNullOrWhiteSpace(answer)) throw new ArgumentException("Answer cannot be empty.", nameof(answer));
 
+            if (string.IsNullOrEmpty(question) || string.IsNullOrEmpty(answer))
+            {
+                throw new ArgumentException("Question and Answer are required for explanation generation");
+            }
+
             var template = await _promptLoader.LoadAsync("explanation");
 
             var args = new KernelArguments
@@ -138,7 +151,12 @@ namespace EducationalContentGeneration.Core.Plugins
                 ["answer"] = answer
             };
 
-            return await ExecutePromptAsync(template, args);
+            var response = await ExecutePromptAsync(template, args);
+
+            Console.WriteLine("\nJsonResponse");
+            Console.WriteLine(response);
+
+            return response!;
         }
 
         [KernelFunction("BuildQuestionPaper")]
@@ -178,7 +196,12 @@ namespace EducationalContentGeneration.Core.Plugins
                 ["includeAnswers"] = includeAnswers
             };
 
-            return await ExecutePromptAsync(template, args);
+            var response = await ExecutePromptAsync(template, args);
+
+            Console.WriteLine("\nJsonResponse");
+            Console.WriteLine(response);
+
+            return response!;
         }
 
         private async Task<string> ExecutePromptAsync(string template, KernelArguments args)
@@ -186,29 +209,18 @@ namespace EducationalContentGeneration.Core.Plugins
             if (string.IsNullOrWhiteSpace(template))
                 throw new InvalidOperationException("Prompt template is empty.");
 
-            Console.WriteLine(template);
-
-            var config = new PromptTemplateConfig
+            var settings = new AzureOpenAIPromptExecutionSettings
             {
-                Template = template,
-                TemplateFormat = "semantic-kernel",
-                ExecutionSettings =
-                {
-                    ["default"] = new AzureOpenAIPromptExecutionSettings
-                    {
-                        Temperature = 0.1,
-                        TopP = 0.8,
-                        MaxTokens = 1200,
-                        ResponseFormat = "json_object",
-                        FrequencyPenalty = 0,
-                        PresencePenalty = 0
-                    }
-                }
+                Temperature = 0.1,
+                TopP = 0.8,
+                ResponseFormat = "json_object"
             };
 
-            var PromptFunction = _kernel.CreateFunctionFromPrompt(config);
-
-            var result = await _kernel.InvokeAsync(PromptFunction, args);
+            args.ExecutionSettings = new Dictionary<string, PromptExecutionSettings>
+            {
+                ["default"] = settings
+            };
+            var result = await _kernel.InvokePromptAsync(template, args);
 
             return result.GetValue<string>() ?? string.Empty;
         }

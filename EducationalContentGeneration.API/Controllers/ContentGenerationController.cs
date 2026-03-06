@@ -17,7 +17,7 @@ namespace EducationalContentGeneration.API.Controllers
         }
 
         [HttpPost("generate")]
-        public async Task<IActionResult> Generate(ContentGenerationRequest request)
+        public async Task<IActionResult> Generate([FromBody] ContentGenerationRequest request)
         {
             var result = await _kernelService.GenerateContentAsync(request);
             return Ok(result);

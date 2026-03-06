@@ -1,9 +1,10 @@
 ﻿using EducationalContentGeneration.API.Services;
+using EducationalContentGeneration.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 
 namespace EducationalContentGeneration.API.Controllers
 {
-    [Route("api/content-prompt")]
+    [Route("api/content")]
     [ApiController]
     public class ContentPromptGenerationController : ControllerBase
     {
@@ -14,10 +15,10 @@ namespace EducationalContentGeneration.API.Controllers
             _kernelService = kernelService;
         }
 
-        [HttpPost("generate")]
-        public async Task<IActionResult> Generate(string prompt)
+        [HttpPost("prompt")]
+        public async Task<IActionResult> Prompt([FromBody] PromptRequest request)
         {
-            var result = await _kernelService.GeneratePromptContentAsync(prompt);
+            var result = await _kernelService.GeneratePromptContentAsync(request.Prompt);
             return Ok(result);
         }
     }

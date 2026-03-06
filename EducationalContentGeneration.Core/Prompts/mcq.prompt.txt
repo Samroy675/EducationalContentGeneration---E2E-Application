@@ -7,21 +7,17 @@ Topic: {{$topic}}
 Difficulty: {{$difficultyLevel}}
 Class Level: {{$classLevel}}
 
-Return JSON in this format.
+Return ONLY valid JSON matching the schema
 
+JSON structure must be exactly:
 
 {
   "questions": [
     {
-      "question": "What is the smallest unit of matter",
-      "options": [
-      "Molecule",
-      "Atom",
-      "Compound",
-      "Ion"
-      ],
-      "correctAnswer": "Atom",
-      "explanation": "An atom is the smallest unit of an element"
+      "question": "...",
+      "options": ["A", "B", "C", "D"],
+      "correctAnswer": "...",
+      "explanation": "..."
     }
   ]
 }

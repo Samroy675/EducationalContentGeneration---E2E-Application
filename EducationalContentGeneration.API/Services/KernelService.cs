@@ -1,7 +1,9 @@
-﻿using EducationalContentGeneration.Core.Models;
+﻿using EducationalContentGeneration.Core.Enums;
+using EducationalContentGeneration.Core.Models;
 using EducationalContentGeneration.Core.Plugins;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
+using System.Text.Json;
 
 namespace EducationalContentGeneration.API.Services
 {
@@ -27,36 +29,60 @@ namespace EducationalContentGeneration.API.Services
             _pluginsAdded = true;
         }
 
-        public async Task<string> GeneratePromptContentAsync(string prompt)
+        public async Task<PromptResponse> GeneratePromptContentAsync(string prompt)
         {
             EnsurePluginsAdded();
 
             var settings = new OpenAIPromptExecutionSettings
             {
-                Temperature = 0.1,
                 ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
             };
 
             var result = await _kernel.InvokePromptAsync(prompt, new KernelArguments(settings));
 
-            return result.GetValue<string>() ?? string.Empty;
+            Console.WriteLine(result);
+            Console.WriteLine(prompt);
+
+            var responseText = result.GetValue<string>();
+
+            return new PromptResponse
+            {
+                Message = responseText ?? string.Empty
+            };
         }
 
-        public async Task<string> GenerateContentAsync(ContentGenerationRequest request)
+        public async Task<Object> GenerateContentAsync(ContentGenerationRequest request)
         {
+            Type responseType = request.ContentType switch
+            {
+                ContentGenerationType.Mcq => typeof(McqResponse),
+                ContentGenerationType.ShortAnswer => typeof(ShortAnswerResponse),
+                ContentGenerationType.LongAnswer => typeof(LongAnswerResponse),
+                ContentGenerationType.Explanation => typeof(ExplanationResponse),
+                ContentGenerationType.QuestionPaper => request.includeAnswers == true
+                ? typeof(QuestionPaperResponse)
+                : typeof(QuestionPaperNoAnswerResponse),
+
+                _ => throw new Exception("Unsupported Content Type")
+            };
+
             EnsurePluginsAdded();
 
             var prompt = BuildPrompt(request).Trim();
 
             var settings = new OpenAIPromptExecutionSettings
             {
-                ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions
+                ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
+                ResponseFormat = responseType
             };
 
             var result = await _kernel.InvokePromptAsync(prompt, new KernelArguments(settings));
-            var responseText = result.GetValue<string>() ?? string.Empty;
 
-            return responseText.Trim();
+            var responseText = result.GetValue<string>();
+
+            var responseObject = JsonSerializer.Deserialize(responseText, responseType)!;
+
+            return responseObject;
         }
 
         private string BuildPrompt(ContentGenerationRequest request)
@@ -73,6 +99,8 @@ namespace EducationalContentGeneration.API.Services
             }
             request.numberOfQuestions = request.numberOfQuestions <= 0 ? 1 : request.numberOfQuestions;
 
+            var answerInstruction = (bool)request.includeAnswers! ? "Include correct answers and explanations for each question." : "Do NOT include answers or explanations. Generate only the questions";
+
             return request.ContentType switch
             {
                 Core.Enums.ContentGenerationType.Mcq =>
@@ -88,10 +116,19 @@ namespace EducationalContentGeneration.API.Services
                 $"Evaluate the following Answer. Subject {request.subject}, Question: {request.question}, Answer: {request.answer}.",
 
                 Core.Enums.ContentGenerationType.QuestionPaper =>
-                $"Generate a Question paper for Subject {request.subject} for class {request.classLevel} with difficulty {request.difficultyLevel}. Include {request.mcqCount} MCQs, {request.shortAnswerCount}, short Answer Questions, and {request.longAnswerCount} long Answer Questions. Total marks {request.totalMarks}, duration {request.examDuration}, minutes. Include Answers: {request.includeAnswers}",
+                $@"Generate a question paper for Subject {request.subject} 
+                for class {request.classLevel} with difficulty{request.difficultyLevel}. 
+
+                 Include {request.mcqCount} MCQs,
+                 {request.shortAnswerCount} Short Answer Questions,
+                 and {request.longAnswerCount} Long Answer Questions.
+
+                 Total marks {request.totalMarks}, duration {request.examDuration} minutes.
+                 {answerInstruction}",
 
                 _ => throw new Exception("Unsupported content type")
             };
         }
     }
 }
+
