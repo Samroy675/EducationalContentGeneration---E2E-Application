@@ -1,0 +1,109 @@
+﻿@page "/history"
+@inject IJSRuntime JS
+@using EducationalContentGeneration.UI.Models
+@using System.Text.Json
+
+<TopBar Title="History" BadgeText="H" BadgeClass="tag-purple" />
+
+<div class="two-panel">
+    <!---Left Panel---->
+    <div class="form-panel">
+
+        <div class="history-toolbar">
+            <button class="btn btn-danger" @onclick="ClearHistory">Clear History</button>
+        </div>
+        @if (_historyItems.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-icon">🕘</div>
+                <div class="empty-title">History</div>
+                <div class="empty-sub">No history yet</div>
+            </div>
+        }
+        else  
+        {
+            @foreach (var item in _historyItems)
+            {
+                <div class="history-item @(item == _selectedItem ? "active" : "")"
+                 @onclick="() => SelectItem(item)">
+                 <div class="history-text">
+                        <div class="history-type">@item.Type</div>
+                        <div class="history-title">@item.Title</div>
+
+                        <div class="history-time">@item.Time.ToShortTimeString()</div>
+                 </div>
+                <button class="delete-btn" @onclick:stopPropagation="true"  @onclick="() => DeleteHistory(item.Id)">🗑️</button>
+                </div>
+            }
+        }
+    </div>
+
+<!----Right Preview Panel------>
+    <div class="preview-panel">
+
+        @if (_selectedItem == null)
+        {
+            <div class="empty-state">
+                <div class="empty-icon">📄</div>
+                <div class="empty-title">History</div>
+                <div class="empty-sub">
+                    Select a history item to preview
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="history-preview">
+                <h3>@_selectedItem.Type</h3>
+                <div class="history-meta">
+                    @_selectedItem.Time.ToString("f")
+                </div>
+                <pre class="history-content">
+                    @_selectedItem.Content
+                </pre>
+            </div>
+        }
+    </div>
+    </div>
+
+@code {
+    private List<HistoryItem> _historyItems = new();
+    private HistoryItem? _selectedItem;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if(firstRender)
+        {
+            var historyJson = await JS.InvokeAsync<string>("edugen.getHistory");
+            if(!string.IsNullOrEmpty(historyJson))
+            {
+                _historyItems = JsonSerializer.Deserialize<List<HistoryItem>>(historyJson) ?? new List<HistoryItem>();
+            }
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveHistory()
+    {
+        var json = JsonSerializer.Serialize(_historyItems);
+        await JS.InvokeVoidAsync("edugen.saveHistory", json);
+    }
+
+    private async Task DeleteHistory(string id)
+    {
+        _historyItems.RemoveAll(x => x.Id == id);
+        var json = JsonSerializer.Serialize(_historyItems);
+        await JS.InvokeVoidAsync("localStorage.setItem", "edugen.history", json);
+    }
+
+    private async Task ClearHistory()
+    {
+        _historyItems.Clear();
+        await JS.InvokeVoidAsync("localStorage.removeItem", "edugen.history");
+    }
+
+    private void SelectItem(HistoryItem item)
+    {
+        _selectedItem = item;
+    }
+}

@@ -1,9 +1,7 @@
-﻿using EducationalContentGeneration.Core.Models;
-using EducationalContentGeneration.Core.Prompting;
+﻿using EducationalContentGeneration.Core.Prompting;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using System.ComponentModel;
-using System.Text.Json;
 
 namespace EducationalContentGeneration.Core.Plugins
 {
@@ -127,12 +125,9 @@ namespace EducationalContentGeneration.Core.Plugins
         [KernelFunction("EvaluateExplanation")]
         [Description("Use this function when a student Answer needs to be evaluated. It checks whether the provided Answer is correct and explains the reasoning.")]
         public async Task<string> EvaluateExplanationAsync(
-           string subject,
            string question, string answer)
         {
             //minimal backend-level validation
-            if (string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Subject cannot be empty.", nameof(subject));
-
             if (string.IsNullOrWhiteSpace(question)) throw new ArgumentException("Question cannot be empty.", nameof(question));
 
             if (string.IsNullOrWhiteSpace(answer)) throw new ArgumentException("Answer cannot be empty.", nameof(answer));
@@ -146,7 +141,6 @@ namespace EducationalContentGeneration.Core.Plugins
 
             var args = new KernelArguments
             {
-                ["subject"] = subject,
                 ["question"] = question,
                 ["answer"] = answer
             };

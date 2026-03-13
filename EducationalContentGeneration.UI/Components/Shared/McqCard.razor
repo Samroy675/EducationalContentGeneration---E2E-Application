@@ -1,0 +1,78 @@
+@using EducationalContentGeneration.Core.Models
+@inject IJSRuntime JS
+
+<div class="q-card">
+    <div class="q-num">Q@(Number)</div>
+    <div class="q-text">@Question.question</div>
+
+    <div class="q-options">
+        @foreach (var (opt, idx) in Question.options.Select((o, i) => (o, i)))
+        {
+            var letter = ((char)('A' + idx)).ToString();
+            var isCorrect = Question.correctAnswer.Trim().ToUpper() == letter;
+            <div class="q-option @(isCorrect && _showAnswer ? "correct" : "")"
+                 @onclick="() => SelectOption(letter)">
+                <span class="opt-letter @(isCorrect && _showAnswer ? "active" : "")">@letter</span>
+                @opt
+            </div>
+        }
+    </div>
+
+    @if (_showAnswer)
+    {
+        <div class="answer-reveal">
+            <span>✓</span>
+            <span>Answer: @Question.correctAnswer) </span>
+        </div>
+    }
+
+    @if (_showExplanation && !string.IsNullOrEmpty(Question.explanation))
+    {
+        <div class="explanation-box">
+            <span class="explanation-label">💡 Explanation</span>
+            <p>@Question.explanation</p>
+        </div>
+    }
+
+
+    <div class="q-actions">
+        <button class="q-action-btn" @onclick="CopyQuestion">📋 Copy</button>
+        <button class="q-action-btn" @onclick="() => _showExplanation = !_showExplanation">
+            @(_showExplanation ? "▲ Hide" : "💡 Explain")
+        </button>
+        <button class="q-action-btn" @onclick="() => _showAnswer = !_showAnswer">
+            @(_showAnswer ? "🙈 Hide Answer" : "✓ Show Answer")
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public Core.Models.McqQuestion Question { get; set; } = null!;
+    [Parameter] public int Number { get; set; }
+    [Parameter] public bool RevisionMode { get; set; } = false;
+
+    private bool _showAnswer = false;
+    private bool _showExplanation = false;
+
+    protected override void OnParametersSet()
+    {
+        if (RevisionMode) _showAnswer = true;
+    }
+
+    private void SelectOption(string letter) { if (RevisionMode) _showAnswer = true; }
+
+    private string GetAnswerText()
+    {
+        var idx = Question.correctAnswer.Trim().ToUpper()[0] - 'A';
+        return idx >= 0 && idx < Question.options.Count ? Question.options[idx] : "";
+    }
+
+    private async Task CopyQuestion()
+    {
+        var text = $"Q{Number}: {Question.question}\n" +
+                   string.Join("\n", Question.options.Select((o, i) => $"  {(char)('A' + i)}) {o}")) +
+                   $"\nAnswer: {Question.correctAnswer}";
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        await JS.InvokeVoidAsync("edugen.showToast", "Question copied!");
+    }
+}

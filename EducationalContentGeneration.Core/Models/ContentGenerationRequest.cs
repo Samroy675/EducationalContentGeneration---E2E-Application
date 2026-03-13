@@ -37,7 +37,7 @@ namespace EducationalContentGeneration.Core.Models
         [Range(0, 180)]
         public int? examDuration { get; set; }
 
-        public bool? includeAnswers { get; set; }
+        public bool includeAnswers { get; set; } = true;
 
         public string? question { get; set; }
 

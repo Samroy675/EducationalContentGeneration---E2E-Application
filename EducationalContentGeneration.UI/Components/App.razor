@@ -1,18 +1,22 @@
-﻿<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EduGen — Command Center</title>
     <base href="/" />
-    <link rel="stylesheet" href="/app.css" />
-    <link rel="stylesheet" href="EducationalContentGeneration.UI.styles.css" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="icon" type="image/png" href="graduation_cap.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/app.css" />
     <HeadOutlet />
 </head>
 
 <body>
-    <Routes @rendermode = "InteractiveServer"/>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="js/edugen.js"></script>
     <script src="_framework/blazor.web.js"></script>
 </body>
 

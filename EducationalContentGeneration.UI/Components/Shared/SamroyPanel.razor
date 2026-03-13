@@ -1,0 +1,151 @@
+@using EducationalContentGeneration.Core.Models
+@using EducationalContentGeneration.UI.Models
+@using EducationalContentGeneration.UI.Services
+@using System.Text.Json
+@rendermode InteractiveServer  
+@inject ContentApiService ContentService
+@inject IJSRuntime JS
+
+<div class="samroy-panel @(IsOpen ? "open" : "")">
+    <div class="samroy-header">
+        <div class="samroy-title-area">
+            <div class="samroy-orb">🤖</div>
+            <div>
+                <div class="samroy-name">Samroy</div>
+                <div class="samroy-subtitle">Conversational Terminal · Prompt Controller</div>
+            </div>
+        </div>
+        <button class="samroy-close" @onclick="OnClose">✕</button>
+    </div>
+
+    <div class="samroy-messages" id="samroy-msgs">
+        @foreach (var msg in _messages)
+        {
+            <div class="msg @msg.Role">
+                <div class="msg-avatar @msg.Role">
+                    @(msg.Role == "assistant" ? "S" : "U")
+                </div>
+                <div class="msg-bubble">
+                    @if (msg.IsLoading)
+                    {
+                        <span class="typing-dots">
+                            <span></span><span></span><span></span>
+                        </span>
+                    }
+                    else
+                    {
+                        @((MarkupString)msg.Content.Replace("\n", "<br/>"))
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="samroy-input-area">
+        <div class="samroy-input-row">
+            <textarea class="samroy-input"
+                      @bind="_inputText"
+                      @bind:event="oninput"
+                      @onkeydown="HandleKeyDown"
+                      placeholder="e.g. Generate 8 MCQs for Chemistry, Class 8, Medium difficulty"
+                      rows="1"></textarea>
+            <button class="samroy-send" @onclick="SendMessage" disabled="@_isLoading">
+                @(_isLoading ? "⏳" : "➤")
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private List<ChatMessage> _messages = new();
+    private string _inputText = string.Empty;
+    private bool _isLoading = false;
+
+    protected override void OnInitialized()
+    {
+        _messages.Add(new ChatMessage { Role = "assistant", Content = "👋 Hi, I'm Samroy,\nI can help you generate:\n🔠 MCQs\n✏️ Short Answers\n📜 Long Answers\n💬 Evaluate user answers\n📋 Full Question Paper\nJust tell me what you need!" });
+        _messages.Add(new ChatMessage { Role = "assistant", Content = "Example: Generate 5 MCQs for Chemistry Class 8 on Periodic Table." });
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey) await SendMessage();
+    }
+
+    private async Task SendMessage()
+    {
+        var text = _inputText.Trim();
+
+        var lower = text.ToLower();
+        if(lower.StartsWith("hi") || lower.StartsWith("hello") || lower.Contains("samroy"))
+        {
+            _messages.Add(new ChatMessage
+            {
+                Role = "assistant", Content = "👋 Hi, I'm Samroy,\n What can I help you with today?\nI can generate,\n🔠 MCQs\n✏️ Short Answers\n📜 Long Answers\n💬 Evaluate your answers\n📋 Full Question Paper\nWhat would you like to create?"
+            });
+
+            _isLoading = false;
+            StateHasChanged();
+            await ScrollToBottom();
+            return;
+        }
+
+        if (string.IsNullOrEmpty(text) || _isLoading) return;
+
+        _messages.Add(new ChatMessage { Role = "user", Content = text });
+        _inputText = string.Empty;
+
+        var loadingMsg = new ChatMessage { Role = "assistant", IsLoading = true };
+        _messages.Add(loadingMsg);
+        _isLoading = true;
+        StateHasChanged();
+        await ScrollToBottom();
+
+        PromptResponse response = null;
+
+        try
+        {
+            response = await ContentService.GeneratePromptAsync(new Core.Models.PromptRequest { Prompt = text });
+
+            _messages.Remove(loadingMsg);
+            _messages.Add(new ChatMessage { Role = "assistant", Content = response.Message });
+        }catch
+        {
+            _messages.Remove(loadingMsg);
+            _messages.Add(new ChatMessage { Role = "assistant", Content = "⚠️ Something went wrong while processing your prompt." });
+        }
+
+        if(response != null)
+        {
+            var historyItem = new HistoryItem
+            {
+                Type = "💭 Chat",
+                Title = text,
+                Content = response.Message,
+                Time = DateTime.Now
+            };
+
+            var json = JsonSerializer.Serialize(historyItem);
+            await JS.InvokeVoidAsync("edugen.addHistoryItem", json);
+        }
+
+        _isLoading = false;
+        StateHasChanged();
+
+        await ScrollToBottom();
+    }
+
+    private string ExtractTopic(string input)
+    {
+        if (input.Contains("chemical reaction")) return "Chemical Reactions";
+        if (input.Contains("photosynthesis"))    return "Photosynthesis";
+        if (input.Contains("atom"))              return "Atomic Structure";
+        return "General Topic";
+    }
+
+    private async Task ScrollToBottom()
+        => await JS.InvokeVoidAsync("edugen.scrollToBottom", "samroy-msgs");
+}

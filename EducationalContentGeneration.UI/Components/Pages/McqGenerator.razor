@@ -1,0 +1,158 @@
+@page "/mcq"
+@page "/"
+@rendermode InteractiveServer
+@using EducationalContentGeneration.Core.Models
+@using EducationalContentGeneration.Core.Enums
+@using EducationalContentGeneration.UI.Services
+@using System.Text.Json
+@inject IJSRuntime JS
+@inject ContentApiService ContentService
+
+<TopBar Title="MCQ Generator" BadgeText="MCQ" BadgeClass="tag-green"
+        ShowExportKey="true" ContentToCopy="@_clipboardText" />
+
+<div class="stats-bar">
+    <div class="stat-item">Questions: <span class="stat-val">@_request.numberOfQuestions</span></div>
+    <div class="stat-item">Subject: <span class="stat-val">@(_request.subject.OrDash())</span></div>
+    <div class="stat-item">Grade: <span class="stat-val">@(_request.classLevel)</span></div>
+    <div class="stat-item">Difficulty: <span class="stat-val">@_request.difficultyLevel</span></div>
+    @if (_questions.Count > 0)
+    {
+        <div class="stat-item" style="margin-left:auto">
+            <span class="tag tag-green">@_questions.Count Generated</span>
+        </div>
+    }
+</div>
+
+<div class="two-panel">
+    <div class="form-panel">
+        <div class="form-group">
+            <label class="form-label">Subject</label>
+            <input class="form-control" @bind="_request.subject" placeholder="e.g. Chemistry" />
+        </div>
+        <div class="form-group">
+            <label class="form-label">Topic</label>
+            <input class="form-control" @bind="_request.topic" placeholder="e.g. Chemical Reactions" />
+        </div>
+        <div class="form-group">
+            <label class="form-label">Grade Level</label>
+            <select class="form-control" @bind="_request.classLevel">
+                @foreach (var g in _grades) { <option value="@g">@g</option> }
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Difficulty</label>
+            <div class="toggle-group">
+                @foreach (var d in Enum.GetValues<Core.Enums.DifficultyLevel>())
+                {
+                    <button class="toggle-btn @(_request.difficultyLevel == d ? "active" : "")"
+                            @onclick="() => _request.difficultyLevel = d">@d</button>
+                }
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">No. of Questions</label>
+            <div class="count-control">
+                <button class="count-btn" @onclick="() => _request.numberOfQuestions = (byte)Math.Max(1, (_request.numberOfQuestions ?? 1) - 1)">−</button>
+                <span class="count-val">@_request.numberOfQuestions</span>
+                <button class="count-btn" @onclick="() => _request.numberOfQuestions = (byte)Math.Min(30, (_request.numberOfQuestions ?? 1) + 1)">+</button>
+            </div>
+        </div>
+
+        <button class="generate-btn" @onclick="GenerateAsync" disabled="@_isLoading">
+            @if (_isLoading) { <span class="spinner"></span> <span>Generating...</span> }
+            else { <span>⚡</span> <span>Generate Questions</span> }
+        </button>
+
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="error-msg">⚠ @_error</div>
+        }
+    </div>
+
+    <div class="preview-panel">
+        @if (_isLoading)
+        {
+            <div style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:300px">
+                <div style="font-size:18px;margin-bottom:10px;">🤖 AI is generating MCQ questions...</div>
+                @for (int i = 0; i < 4; i++)
+                {
+                    <div class="skeleton" style="height:80px;border-radius:12px;width:80%"></div>
+                }
+            </div>
+        }
+        else if (_questions.Count == 0)
+        {
+            <div class="empty-state">
+                <div class="empty-icon">⊞</div>
+                <div class="empty-title">Ready to Generate</div>
+                <div class="empty-sub">Fill the form and click Generate to create your MCQ set</div>
+            </div>
+        }
+        else
+        {
+            <div class="preview-header">
+                <div class="preview-meta">
+                    <span class="tag tag-green">@_request.subject</span>
+                    <span class="tag tag-blue">@_request.classLevel</span>
+                    <span class="tag tag-amber">@_request.difficultyLevel</span>
+                </div>
+                <span class="result-count">@_questions.Count Questions</span>
+            </div>
+            @for (int i = 0; i < _questions.Count; i++)
+            {
+                var num = i + 1;
+                var q = _questions[i];
+                <McqCard Question="@q" Number="@num" RevisionMode="false" />
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private ContentGenerationRequest _request = new() { ContentType = Core.Enums.ContentGenerationType.Mcq, numberOfQuestions = 8, difficultyLevel = Core.Enums.DifficultyLevel.Medium, classLevel = Core.Enums.EducationClass.Class6 };
+    private List<McqQuestion> _questions = new();
+    private bool _isLoading = false;
+    private string _error = string.Empty;
+    private string _clipboardText = string.Empty;
+    private readonly string[] _grades = ["Class6","Class7","Class8","Class9","Class10"];
+
+    private async Task GenerateAsync()
+    {
+        _error = string.Empty;
+        if (string.IsNullOrWhiteSpace(_request.subject)) 
+        { 
+            _error = "Please enter a subject.";
+            return; 
+        }
+        _isLoading = true;
+
+        _questions.Clear(); 
+        StateHasChanged();
+
+        try
+        {
+            _questions = await ContentService.GenerateMcqAsync(_request);
+            _error = "";
+        }catch(Exception ex)
+        {
+            _error = ex.Message;
+        }
+
+        _clipboardText = string.Join("\n\n", _questions.Select((q, i) =>
+            $"Q{i+1}: {q.question}\n" + string.Join("\n", q.options.Select((o,j) => $"  {(char)('A'+j)}) {o}")) + $"\nAnswer: {q.correctAnswer}"));
+
+        var historyItem = new HistoryItem
+        {
+            Type = "🔠 MCQ",
+           Title = $"{_request.subject} - {_request.topic}",
+           Content = _clipboardText,
+           Time = DateTime.Now
+        };
+
+        var json = JsonSerializer.Serialize(historyItem);
+        await JS.InvokeVoidAsync("edugen.addHistoryItem", json);
+
+        _isLoading = false;
+    }
+}

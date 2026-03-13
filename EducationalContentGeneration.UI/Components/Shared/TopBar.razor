@@ -1,5 +1,37 @@
-﻿<h3>TopBar</h3>
+@inject IJSRuntime JS
+
+<div class="topbar">
+    <div class="topbar-left">
+        <span class="topbar-breadcrumb">Command Center</span>
+        <span class="topbar-sep">›</span>
+        <span class="topbar-title">@Title</span>
+        @if (!string.IsNullOrEmpty(BadgeText))
+        {
+            <span class="tag @BadgeClass">@BadgeText</span>
+        }
+    </div>
+    <div class="topbar-right">
+        <div class="topbar-actions">
+            <button class="btn btn-ghost" @onclick="HandleCopy">📋 Copy</button>
+            <button class="btn btn-ghost" @onclick="HandlePrint">🖨️ Print Draft</button>
+        </div>
+        <div class="avatar">R</div>
+    </div>
+</div>
 
 @code {
+    [Parameter] public string Title { get; set; } = string.Empty;
+    [Parameter] public string BadgeText { get; set; } = string.Empty;
+    [Parameter] public string BadgeClass { get; set; } = "tag-green";
+    [Parameter] public bool ShowExportKey { get; set; } = false;
+    [Parameter] public string? ContentToCopy { get; set; }
+    [Parameter] public EventCallback OnExport { get; set; }
 
+    private async Task HandleCopy()
+    {
+        if (!string.IsNullOrEmpty(ContentToCopy))
+            await JS.InvokeVoidAsync("navigator.clipboard.writeText", ContentToCopy);
+        await JS.InvokeVoidAsync("edugen.showToast", "Copied to clipboard!");
+    }
+    private async Task HandlePrint() => await JS.InvokeVoidAsync("window.print");
 }

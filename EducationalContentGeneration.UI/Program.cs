@@ -1,22 +1,25 @@
 using EducationalContentGeneration.UI.Components;
-using EducationalContentGeneration.UI.Components.Services;
-using EduGen.UI.Components;
+using EducationalContentGeneration.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddScoped<MockDataService>();  
-builder.Services.AddScoped<IQuestionPaperService, MockQuestionPaperService>();
+// register service Mock or Api
+builder.Services.AddHttpClient<ContentApiService>(client =>
+{
+    client.BaseAddress = new Uri("http://localhost:45581");
+});
+
+builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true;  });
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
-    app.UseExceptionHandler("/Error", createScopeForErrors: true);
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
 }
 
 app.UseStaticFiles();

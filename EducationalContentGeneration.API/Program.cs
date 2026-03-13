@@ -1,9 +1,11 @@
+using EducationalContentGeneration.API.Endpoints;
 using EducationalContentGeneration.API.Services;
+using EducationalContentGeneration.Core.Enums;
 using EducationalContentGeneration.Core.Plugins;
 using EducationalContentGeneration.Core.Prompting;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.Connectors.OpenAI;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,19 +42,48 @@ builder.Services.AddScoped<Kernel>(sp =>
 });
 
 // Kernel Service wrapper 
+builder.Services.AddScoped<GuardrailService>();
+builder.Services.AddScoped<TopicValidationService>();
 builder.Services.AddScoped<KernelService>();
 builder.Services.AddScoped<ContentGenerationPlugin>();
 
 // Ensure enums are serialized as strings in JSON responses
-builder.Services.AddControllers().AddJsonOptions(options =>
+builder.Services.ConfigureHttpJsonOptions(options =>
 {
-    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
 
 builder.Services.AddSwaggerGen(c =>
 {
-    c.UseInlineDefinitionsForEnums();
+    c.MapType<ContentGenerationType>(() => new OpenApiSchema
+    {
+        Type = "string",
+        Enum = Enum.GetNames(typeof(ContentGenerationType))
+               .Select(n => new OpenApiString(n))
+               .Cast<IOpenApiAny>()
+               .ToList()
+    });
+
+    c.MapType<DifficultyLevel>(() => new OpenApiSchema
+    {
+        Type = "string",
+        Enum = Enum.GetNames(typeof(DifficultyLevel))
+               .Select(n => new OpenApiString(n))
+               .Cast<IOpenApiAny>()
+               .ToList()
+    });
+
+    c.MapType<EducationClass>(() => new OpenApiSchema
+    {
+        Type = "string",
+        Enum = Enum.GetNames(typeof(EducationClass))
+               .Select(n => new OpenApiString(n))
+               .Cast<IOpenApiAny>()
+               .ToList()
+    });
 });
+
+builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
@@ -64,5 +95,5 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseAuthorization();
-app.MapControllers();
+app.MapContentEndpoints();
 app.Run();

@@ -1,0 +1,112 @@
+@page "/evaluator"
+@rendermode InteractiveServer
+@using EducationalContentGeneration.Core.Models
+@using EducationalContentGeneration.UI.Services
+@using System.Text.Json
+@inject IJSRuntime JS
+@inject ContentApiService ContentService
+
+<TopBar Title="Answer Explainer & Evaluator" BadgeText="Evaluator" BadgeClass="tag-amber"
+        ShowExportKey="true" ContentToCopy="@GetCopyContent()" />
+
+<div class="two-panel">
+    <div class="form-panel">
+        <div class="form-group">
+            <label class="form-label">Question</label>
+            <textarea class="form-control" @bind="_request.question"    
+                      placeholder="Enter the question to evaluate..."
+                      style="resize:vertical;min-height:100px"></textarea>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Student's Answer</label>
+            <textarea class="form-control" @bind="_request.answer"
+                      placeholder="Enter the student's answer here..."
+                      style="resize:vertical;min-height:100px"></textarea>
+        </div>
+        <button class="generate-btn" @onclick="EvaluateAsync" disabled="@_isLoading">
+            @(_isLoading ? "⏳ Evaluating..." : "⚡ Evaluate & Explain")
+        </button>
+    </div>
+
+    <div class="preview-panel">
+        @if (_isLoading)
+        {
+            <div style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:300px">
+                <div style="font-size:18px;margin-bottom:10px;">🤖 AI is evaluating the answers...</div>
+                @for (int i = 0; i < 4; i++)
+                {
+                    <div class="skeleton" style="height:80px;border-radius:12px;width:80%"></div>
+                }
+            </div>
+        }
+        else if (_result is null)
+        {
+            <div class="empty-state">
+                <div class="empty-icon">💬</div>
+                <div class="empty-title">Evaluator Ready</div>
+                <div class="empty-sub">Enter a question and student's answer to get an instant evaluation with detailed explanation</div>
+            </div>
+        }
+        else
+        {
+            <div class="eval-card">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+                    <span class="eval-card-title">Evaluation Result</span>
+                    <span class="tag @(_result.Evaluation.Contains("Correct") ? "tag-green" : "tag-danger")">
+                        @(_result.Evaluation);
+                    </span>
+                </div>
+                <div class="form-label" style="margin-bottom:6px">Question</div>
+                <div class="eval-q-text">@_request.question</div>
+                <div class="form-label" style="margin-bottom:6px;margin-top:14px">Student's Answer</div>
+                <div class="eval-answer-box">@_request.answer</div>
+                <div class="eval-result @(_result.Evaluation?.Contains("Correct") ?? false) ? "eval-correct" : "eval-incorrect")">
+                    <div class="eval-result-label">@((_result.Evaluation?.Contains("Correct") ?? false) ? "✅ EXPLANATION" : "❌ CORRECTION NEEDED")</div>
+                    <p class="eval-explanation">@_result.Explanation</p>
+                </div>
+            </div>
+            <div style="margin-top:12px;text-align:center">
+                <button class="q-action-btn" @onclick="() => _result = null">← Evaluate another</button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    private ContentGenerationRequest _request = new() { ContentType = Core.Enums.ContentGenerationType.Explanation };
+    private ExplanationResponse? _result;
+    private bool _isLoading = false;
+
+    private async Task EvaluateAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_request.question) || string.IsNullOrWhiteSpace(_request.answer)) return;
+
+        try
+        {
+            _isLoading = true;
+            _result = null;
+
+            _result = await ContentService.EvaluateAnswerAsync(_request);
+
+            var historyItem = new HistoryItem
+            {
+                Type = "💬 Evaluator",
+                Title = $"{_request.subject}",
+                Content = $"Evaluation: {_result.Evaluation}\n\nExplanation: {_result.Explanation}",
+                Time = DateTime.Now
+            };
+
+            var json = JsonSerializer.Serialize(historyItem);
+            await JS.InvokeVoidAsync("edugen.addHistoryItem", json);
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private string GetCopyContent()
+    {
+        return $"Evaluation: {_result?.Evaluation}\n\nExplanation: {_result?.Explanation}";
+    }
+}

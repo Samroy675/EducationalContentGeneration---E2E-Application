@@ -104,7 +104,7 @@ namespace EducationalContentGeneration.API.Services
             return request.ContentType switch
             {
                 Core.Enums.ContentGenerationType.Mcq =>
-                $"Content type: MCQ. Generate {request.numberOfQuestions} multiple choice Questions for Subject {request.subject} on Topic {request.topic} for class {request.classLevel} with difficulty {request.difficultyLevel}.",
+                $"Content type: MCQ. Generate {request.numberOfQuestions ?? 5} multiple choice Questions for Subject {request.subject} on Topic {request.topic} for class {request.classLevel} with difficulty {request.difficultyLevel}.",
 
                 Core.Enums.ContentGenerationType.ShortAnswer =>
                 $"Content type: ShortAnswer. Generate {request.numberOfQuestions} short Answer Questions for Subject {request.subject}  on Topic   {request.topic}   for class   {request.classLevel}   with difficulty  {request.difficultyLevel}.",

@@ -1,12 +1,85 @@
-﻿@inherits LayoutComponentBase
-@using EducationalContentGeneration.UI.Components.Shared
+@inherits LayoutComponentBase
+@inject IJSRuntime JS
 
-<div class="app-container">
+<div class="app-shell">
+    <nav class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">🎓</div>
+            <span class="logo-text">EduGen</span>
+        </div>
 
-    <Sidebar />
+        <div class="sidebar-section-label">Generators</div>
 
-    <div class="workspace">
+        <NavLink class="nav-item" href="/mcq" Match="NavLinkMatch.All">
+            <span class="nav-icon">🔠</span>
+            <span>MCQ Generator</span>
+        </NavLink>
+        <NavLink class="nav-item" href="/short-answer">
+            <span class="nav-icon">✏️</span>
+            <span>Short Answer</span>
+        </NavLink>
+        <NavLink class="nav-item" href="/long-answer">
+            <span class="nav-icon">📜</span>
+            <span>Long Answer</span>
+        </NavLink>
+        <NavLink class="nav-item" href="/evaluator">
+            <span class="nav-icon">💬</span>
+            <span>Answer Explainer</span>
+        </NavLink>
+        <NavLink class="nav-item" href="/question-paper">
+            <span class="nav-icon">📋</span>
+            <span>Question Paper Builder</span>
+        </NavLink>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="samroy-nav-btn" @onclick="ToggleSamroy">
+            <div class="samroy-nav-title">
+                <span>🤖</span>
+                <span>Samroy</span>
+            </div>
+            <div class="samroy-nav-sub">Prompt Controller</div>
+        </div>
+
+        <div class="sidebar-bottom">
+            <NavLink class="nav-item" href="/history">
+                <span class="nav-icon">🕐</span>
+                <span>History</span>
+            </NavLink>
+            <!-- Theme toggle -->
+            <div class="theme-toggle-row" @onclick="ToggleTheme" title="Toggle light/dark mode">
+                <span>@(_isDark ? "☀️" : "🌙")</span>
+                <span>@(_isDark ? "Light Mode" : "Dark Mode")</span>
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-area">
         @Body
     </div>
-
 </div>
+
+<SamroyPanel IsOpen="@_samroyOpen" OnClose="@(() => _samroyOpen = false)" />
+
+@if (!_samroyOpen)
+{
+    <button class="fab" @onclick="ToggleSamroy" title="Open Samroy">🤖</button>
+}
+
+@code {
+    private bool _samroyOpen = false;
+    private bool _isDark = false;
+    private bool _showHistory = false;
+
+    private void ToggleSamroy()
+    {
+        _samroyOpen = !_samroyOpen;
+        StateHasChanged();
+    }
+
+    private async Task ToggleTheme()
+    {
+        _isDark = !_isDark;
+        await JS.InvokeVoidAsync("edugen.setTheme", _isDark ? "dark" : "light");
+    }
+}

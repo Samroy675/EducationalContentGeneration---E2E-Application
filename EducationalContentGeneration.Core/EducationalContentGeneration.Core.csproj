@@ -8,16 +8,19 @@
 
   <ItemGroup>
     <None Remove="Prompts\explanation.prompt.txt" />
+    <None Remove="Prompts\guardrail.prompt.txt" />
     <None Remove="Prompts\long-Answer.prompt.txt" />
     <None Remove="Prompts\mcq.prompt.txt" />
     <None Remove="Prompts\Question-paper.prompt.txt" />
     <None Remove="Prompts\short-Answer.prompt.txt" />
+    <None Remove="Prompts\topic-validation.prompt.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Prompts\explanation.prompt.txt">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Prompts\guardrail.prompt.txt" />
     <EmbeddedResource Include="Prompts\long-Answer.prompt.txt">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
@@ -30,6 +33,7 @@
     <EmbeddedResource Include="Prompts\short-Answer.prompt.txt">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </EmbeddedResource>
+    <EmbeddedResource Include="Prompts\topic-validation.prompt.txt" />
   </ItemGroup>
 
   <ItemGroup>
