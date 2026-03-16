@@ -15,9 +15,9 @@ namespace EducationalContentGeneration.Core.Models
         [JsonPropertyName("Subject")]
         public string Subject { get; set; } = string.Empty;
         [JsonPropertyName("ClassLevel")]
-        public string ClassLevel {  get; set; } = string.Empty;
+        public string ClassLevel { get; set; } = string.Empty;
         [JsonPropertyName("Difficulty")]
-        public string Difficulty {  get; set; } = string.Empty;
+        public string Difficulty { get; set; } = string.Empty;
         [JsonPropertyName("TotalMarks")]
         public int TotalMarks { get; set; }
         [JsonPropertyName("ExamDuration")]

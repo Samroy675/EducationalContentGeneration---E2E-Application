@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EducationalContentGeneration.Core.Models
+﻿namespace EducationalContentGeneration.Core.Models
 {
     public class PromptRequest
     {

@@ -26,6 +26,10 @@
         <button class="generate-btn" @onclick="EvaluateAsync" disabled="@_isLoading">
             @(_isLoading ? "⏳ Evaluating..." : "⚡ Evaluate & Explain")
         </button>
+        @if (!string.IsNullOrEmpty(_error))
+        {
+            <div class="error-msg">⚠ @_error</div>
+        }
     </div>
 
     <div class="preview-panel">
@@ -75,11 +79,27 @@
 @code {
     private ContentGenerationRequest _request = new() { ContentType = Core.Enums.ContentGenerationType.Explanation };
     private ExplanationResponse? _result;
+    private string _error = string.Empty;
     private bool _isLoading = false;
 
     private async Task EvaluateAsync()
     {
-        if (string.IsNullOrWhiteSpace(_request.question) || string.IsNullOrWhiteSpace(_request.answer)) return;
+        _error = string.Empty;
+        if (string.IsNullOrWhiteSpace(_request.question) && (string.IsNullOrWhiteSpace(_request.answer)))
+        {
+            _error = "Please enter a question and answer.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_request.question))
+        {
+            _error = "Please enter a question.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(_request.answer))
+        {
+            _error = "Please enter a answer.";
+            return;
+        }
 
         try
         {

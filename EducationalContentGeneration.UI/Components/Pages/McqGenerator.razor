@@ -63,7 +63,6 @@
             @if (_isLoading) { <span class="spinner"></span> <span>Generating...</span> }
             else { <span>⚡</span> <span>Generate Questions</span> }
         </button>
-
         @if (!string.IsNullOrEmpty(_error))
         {
             <div class="error-msg">⚠ @_error</div>
@@ -115,39 +114,40 @@
     private bool _isLoading = false;
     private string _error = string.Empty;
     private string _clipboardText = string.Empty;
-    private readonly string[] _grades = ["Class6","Class7","Class8","Class9","Class10"];
+    private readonly string[] _grades = ["Class6", "Class7", "Class8", "Class9", "Class10"];
 
     private async Task GenerateAsync()
     {
         _error = string.Empty;
-        if (string.IsNullOrWhiteSpace(_request.subject)) 
-        { 
+        if (string.IsNullOrWhiteSpace(_request.subject))
+        {
             _error = "Please enter a subject.";
-            return; 
+            return;
         }
         _isLoading = true;
 
-        _questions.Clear(); 
+        _questions.Clear();
         StateHasChanged();
 
         try
         {
             _questions = await ContentService.GenerateMcqAsync(_request);
             _error = "";
-        }catch(Exception ex)
+        }
+        catch (Exception ex)
         {
             _error = ex.Message;
         }
 
         _clipboardText = string.Join("\n\n", _questions.Select((q, i) =>
-            $"Q{i+1}: {q.question}\n" + string.Join("\n", q.options.Select((o,j) => $"  {(char)('A'+j)}) {o}")) + $"\nAnswer: {q.correctAnswer}"));
+            $"Q{i + 1}: {q.question}\n" + string.Join("\n", q.options.Select((o, j) => $"  {(char)('A' + j)}) {o}")) + $"\nAnswer: {q.correctAnswer}"));
 
         var historyItem = new HistoryItem
         {
             Type = "🔠 MCQ",
-           Title = $"{_request.subject} - {_request.topic}",
-           Content = _clipboardText,
-           Time = DateTime.Now
+            Title = $"{_request.subject} - {_request.topic}",
+            Content = _clipboardText,
+            Time = DateTime.Now
         };
 
         var json = JsonSerializer.Serialize(historyItem);

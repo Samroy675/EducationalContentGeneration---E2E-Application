@@ -1137,3 +1137,12 @@ select.form-control { cursor: pointer; }
 .empty-sub {
     font-size: 14px;
 }
+
+.warning-msg {
+    background: #fff4ce;
+    color: #856404;
+    border: 1px solid #ffeeba;
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 10px;
+}

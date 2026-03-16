@@ -7,7 +7,7 @@ namespace EducationalContentGeneration.Tests
 {
     public class GuardrailServiceTests()
     {
-      [Fact]
+        [Fact]
         public void Guardrail_Should_Block_Invalid_Prompt()
         {
             Kernel kernel = null;
@@ -41,7 +41,7 @@ namespace EducationalContentGeneration.Tests
             Assert.True(isEducational);
         }
 
-        [Fact] 
+        [Fact]
         public void Guardrail_Should_Block_Random_Prompt()
         {
             var prompt = "What is the best pizza available in the town?";

@@ -2,7 +2,7 @@
 
 namespace EducationalContentGeneration.Core.Models
 {
-   public class McqResponse
+    public class McqResponse
     {
         [JsonPropertyName("Questions")]
         public List<McqQuestion> questions { get; set; } = new();

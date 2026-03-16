@@ -1,5 +1,4 @@
-﻿using EducationalContentGeneration.Core.Models;
-using EducationalContentGeneration.Core.Prompting;
+﻿using EducationalContentGeneration.Core.Prompting;
 using Microsoft.SemanticKernel;
 
 namespace EducationalContentGeneration.API.Services

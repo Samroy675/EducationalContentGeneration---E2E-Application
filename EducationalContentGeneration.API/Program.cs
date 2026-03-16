@@ -43,7 +43,6 @@ builder.Services.AddScoped<Kernel>(sp =>
 
 // Kernel Service wrapper 
 builder.Services.AddScoped<GuardrailService>();
-builder.Services.AddScoped<TopicValidationService>();
 builder.Services.AddScoped<KernelService>();
 builder.Services.AddScoped<ContentGenerationPlugin>();
 

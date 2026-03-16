@@ -17,7 +17,7 @@ namespace EducationalContentGeneration.UI.Services
 
             var json = await response.Content.ReadAsStringAsync();
 
-            if(json.Contains("message"))
+            if (json.Contains("message"))
             {
                 var error = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
                 throw new Exception(error?["message"]);
@@ -89,7 +89,7 @@ namespace EducationalContentGeneration.UI.Services
             return result ?? new ExplanationResponse();
         }
 
-        public async Task<QuestionPaperResponse>GenerateQuestionPaperAsync(ContentGenerationRequest req)
+        public async Task<QuestionPaperResponse> GenerateQuestionPaperAsync(ContentGenerationRequest req)
         {
             var response = await _httpClient.PostAsJsonAsync("/api/content/generate", req);
 

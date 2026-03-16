@@ -1,16 +1,26 @@
-You are an educational classification system.
+﻿You are a strict validator.
 
-Your task is to determine whether a topic belongs to the given subject.
+Check if the given topic belongs to the subject.
 
 Subject: {{$subject}}
 Topic: {{$topic}}
 
-Score the relationship from 1 to 10.
+Return ONLY a number between 1 and 10.
 
-10 = perfectly related to the subject
-7-9 = mostly related
-4-6 = somewhat related
-1-3 = unrelated topic
+10 = perfectly related
+9 = perfectly related
+8 = perfectly related
+7 = perfectly related
+6 = completely unrelated
+5 = completely unrelated
+4 = completely unrelated
+3 = completely unrelated
+2 = completely unrelated
+1 = completely unrelated
 
-Return ONLY the number
-Do not include explanations.
+Examples:
+Subject: Physics | Topic: Newton's Laws → 10
+Subject: Chemistry | Topic: Photosynthesis → 2
+Subject: Math | Topic: World War 2 → 1
+
+Return only the number.

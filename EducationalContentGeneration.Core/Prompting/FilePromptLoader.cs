@@ -6,7 +6,7 @@ namespace EducationalContentGeneration.Core.Prompting
     {
         public async Task<string> LoadAsync(string promptName)
         {
-            if(string.IsNullOrWhiteSpace(promptName))
+            if (string.IsNullOrWhiteSpace(promptName))
                 throw new ArgumentException("Prompt name cannot be null.", nameof(promptName));
 
             var assembly = typeof(FilePromptLoader).Assembly;
