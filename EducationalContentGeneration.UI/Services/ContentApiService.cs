@@ -1,5 +1,4 @@
-﻿using Azure.Core;
-using EducationalContentGeneration.Core.Models;
+﻿using EducationalContentGeneration.Core.Models;
 using System.Text.Json;
 
 namespace EducationalContentGeneration.UI.Services
@@ -54,14 +53,15 @@ namespace EducationalContentGeneration.UI.Services
                 PropertyNameCaseInsensitive = true
             };
 
-            if(!response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
                 var errorJson = await response.Content.ReadAsStringAsync();
                 try
                 {
                     var error = JsonSerializer.Deserialize<Dictionary<string, string>>(errorJson, options);
                     throw new HttpRequestException(error?["message"] ?? "API request failed");
-                }catch
+                }
+                catch
                 {
                     throw new HttpRequestException("API request failed");
                 }

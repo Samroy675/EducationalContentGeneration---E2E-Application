@@ -781,8 +781,8 @@ select.form-control { cursor: pointer; }
 
 .marks-val { color: var(--text2); font-weight: 600; }
 
-/* ── Samroy Panel ── */
-.samroy-panel {
+/* ── Samroy Bot ── */
+.samroy-bot {
     position: fixed;
     bottom: 0; right: 0;
     width: 400px; height: 510px;
@@ -796,7 +796,7 @@ select.form-control { cursor: pointer; }
     transition: transform 0.28s cubic-bezier(0.4,0,0.2,1), background 0.25s;
 }
 
-.samroy-panel.open { transform: translateY(0); }
+.samroy-bot.open { transform: translateY(0); }
 
 .samroy-header {
     padding: 13px 16px;
@@ -1007,11 +1007,75 @@ select.form-control { cursor: pointer; }
 
 /* ── Print ── */
 @media print {
-    .sidebar, .topbar, .form-panel,
-    .stats-bar, .q-actions, .samroy-panel, .fab { display: none !important; }
-    .two-panel { display: block; }
-    .preview-panel { overflow: visible; padding: 0; }
-    .q-card, .sa-card { break-inside: avoid; margin-bottom: 16px; }
+
+    html, body {
+        overflow: visible !important;
+        height: auto !important;
+    }
+
+    .app-shell,
+    .main-area,
+    .two-panel,
+    .preview-panel {
+        overflow: visible !important;
+        height: auto !important;
+        display: block !important;
+    }
+
+    /* Allow splitting large questions */
+    .q-card,
+    .sa-card {
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+    }
+
+    /* Prevent ugly splits in small elements */
+    .q-option,
+    .answer-reveal,
+    .explanation-box {
+        page-break-inside: avoid;
+        break-inside: avoid;
+    }
+
+    body {
+        background: white !important;
+        color: black !important;
+    }
+
+    .sidebar,
+    .topbar,
+    .form-panel,
+    .samroy-nav-btn,
+    .samroy-bot,
+    .chat-container,
+    .history-btn,
+    .theme-toggle-row {
+        display: none !important;
+    }
+
+    .preview-panel {
+        width: 100% !important;
+        display: block !important;
+        overflow: visible !important;
+    }
+
+    .two-panel,
+    .app-shell,
+    .main-area {
+        display: block: !important;
+    }
+
+    .q-card {
+        page-break-inside: auto;
+        break-inside: auto;
+        margin-bottom: 20px;
+        box-shadow: none !important;
+        border: 1px solid #ccc !important;
+    }
+
+    .q-card-btn {
+        display: none !important;
+    }
 }
 
 /* -- History Items --*/
@@ -1146,3 +1210,5 @@ select.form-control { cursor: pointer; }
     border-radius: 6px;
     margin-top: 10px;
 }
+
+
