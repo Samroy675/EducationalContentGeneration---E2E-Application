@@ -7,11 +7,13 @@ namespace EducationalContentGeneration.API.Services
     {
         private readonly Kernel _kernel;
         private readonly IPromptLoader _promptLoader;
+        private readonly ILogger<GuardrailService> _logger;
 
-        public GuardrailService(Kernel kernel, IPromptLoader promptLoader)
+        public GuardrailService(Kernel kernel, IPromptLoader promptLoader, ILogger<GuardrailService> logger)
         {
             _promptLoader = promptLoader;
             _kernel = kernel;
+            _logger = logger;
         }
 
         public async Task<int> GetPromptScoreAsync(string prompt)
@@ -29,9 +31,11 @@ namespace EducationalContentGeneration.API.Services
 
             var resultText = result.ToString();
 
-            if (!int.TryParse(resultText, out int promptScore))
+            var cleaned = new string(resultText.Where(char.IsDigit).ToArray());
+
+            if (!int.TryParse(cleaned, out int promptScore))
             {
-                Console.WriteLine($"[Guardrail] Failed to parse score. LLM response: {resultText}");
+                _logger.LogInformation($"[Guardrail] Failed to parse score. LLM response: {resultText}");
                 return 0;
             }
 

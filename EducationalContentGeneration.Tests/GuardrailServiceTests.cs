@@ -1,5 +1,6 @@
 ﻿using EducationalContentGeneration.API.Services;
 using EducationalContentGeneration.Core.Prompting;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using NSubstitute;
 
@@ -11,9 +12,9 @@ namespace EducationalContentGeneration.Tests
         public void Guardrail_Should_Block_Invalid_Prompt()
         {
             Kernel kernel = null;
+            var logger = Substitute.For<ILogger<GuardrailService>>();
             var promptLoader = Substitute.For<IPromptLoader>();
-            var guardrailService = new GuardrailService(kernel, promptLoader);
-            var prompt = "Tell me a joke";
+            var guardrailService = new GuardrailService(kernel, promptLoader, logger);
             var score = 4;
             Assert.True(score < 7);
         }

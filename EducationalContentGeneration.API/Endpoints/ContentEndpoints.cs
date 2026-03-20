@@ -18,19 +18,40 @@ namespace EducationalContentGeneration.API.Endpoints
 
             app.MapPost("/api/content/prompt", async Task<IResult> (PromptRequest request, KernelService kernelService, GuardrailService guardrailService) =>
             {
-                if (request == null || string.IsNullOrWhiteSpace(request.Prompt)) return Results.BadRequest("Prompt cannot be empty");
+                if (request == null || string.IsNullOrWhiteSpace(request.Prompt)) return Results.Ok(new PromptResponse
+                {
+                    Message = "Prompt cannot be empty"
+                });
 
                 var promptScore = await guardrailService.GetPromptScoreAsync(request.Prompt);
 
-                if(promptScore < 8)
+                if(promptScore < 6)
                 {
-                    return Results.BadRequest(new PromptResponse
+                    return Results.Ok(new PromptResponse
                     {
                         Message = "Sorry, I can only assist with educational content generation."
                     });
                 }
-                var result = await kernelService.GeneratePromptContentAsync(request.Prompt);
-                return Results.Ok(result);
+
+                try
+                {
+                    var result = await kernelService.GeneratePromptContentAsync(request.Prompt);
+                    if(result == null || string.IsNullOrWhiteSpace(result.Message))
+                    {
+                        return Results.Ok(new PromptResponse
+                        {
+                            Message = "Unable to process the prompt. Try an educational request."
+                        });
+                    }
+                    return Results.Ok(result);
+                }
+                catch
+                {
+                    return Results.Ok(new PromptResponse
+                    {
+                        Message = "Something went wrong while processing your prompt."
+                    });
+                }
             })
             .WithName("GeneratePrompt");
         }

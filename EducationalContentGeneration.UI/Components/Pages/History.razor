@@ -85,17 +85,17 @@
     {
         if (_selectedItem?.Id == id) _selectedItem = null;
         _historyItems.RemoveAll(x => x.Id == id);
-        if(_historyItems != null)
-        {
-            var json = JsonSerializer.Serialize(_historyItems);
-            await JS.InvokeVoidAsync("edugen.saveHistory", json);    
-        }
+        var json = JsonSerializer.Serialize(_historyItems);
+        await JS.InvokeVoidAsync("edugen.saveHistory", json);
+
+        StateHasChanged();
+
     }
 
     private async Task ClearHistory()
     {
         _historyItems.Clear();
-        await JS.InvokeVoidAsync("edugen.saveHistory", "[]");
+        await JS.InvokeVoidAsync("edugen.saveHistory", JsonSerializer.Serialize(_historyItems));
         _selectedItem = null;
     }
 

@@ -61,9 +61,9 @@ window.edugen = {
     },
 
     removeHistoryitem: function (id) {
-        let history = JSON.parse(localStorage.getItem("edugen-history") || "[]");
+        let history = JSON.parse(localStorage.getItem("edugen.history") || "[]");
         history = history.filter(x => x.id !== id);
-        localStorage.setItem("edugen-history", JSON.stringify(history));
+        localStorage.setItem("edugen.history", JSON.stringify(history));
     }
 };
 
