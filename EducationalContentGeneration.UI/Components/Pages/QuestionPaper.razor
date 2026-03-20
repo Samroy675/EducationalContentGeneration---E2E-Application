@@ -1,5 +1,6 @@
 @page "/question-paper"
 @using EducationalContentGeneration.Core.Models
+@using EducationalContentGeneration.UI.Helpers
 @using EducationalContentGeneration.UI.Services
 @using System.Text.Json
 @rendermode InteractiveServer
@@ -7,7 +8,7 @@
 @inject ContentApiService ContentService
 
 <TopBar Title="Question Paper Builder" BadgeText="Builder" BadgeClass="tag-purple"
-        ShowExportKey="true" ContentToCopy="@BuildQuestionPaperText()" />
+        ContentToCopy="@BuildQuestionPaperText()" />
 
 <div class="two-panel">
     <div class="form-panel">
@@ -23,65 +24,77 @@
 
         <div class="form-group">
             <label class="form-label">Subject</label>
-            <input class="form-control" @bind="_request.subject" placeholder="e.g. Science" />
+            <input class="form-control" @bind="_request.Subject" placeholder="e.g. Science" />
         </div>
         <div class="form-group">
             <label class="form-label">Grade Level</label>
-            <select class="form-control" @bind="_request.classLevel">
-                @foreach (var g in Enum.GetValues<Core.Enums.EducationClass>()) { <option value="@g">@g</option> } </select>
+            <select class="form-control" @bind="_request.ClassLevel">
+                @foreach (var g in Enum.GetValues<Core.Enums.EducationClass>())
+                {
+                    <option value="@g">@g</option>
+                }
+            </select>
         </div>
         <div class="form-group">
             <label class="form-label">Difficulty</label>
             <div class="toggle-group">
-                @foreach (var d in Enum.GetValues<Core.Enums.DifficultyLevel>()) {
-                    <button class="toggle-btn @(_request.difficultyLevel == d ? "active" : "")"
-                            @onclick="() => _request.difficultyLevel = d"> @d </button> }
+                @foreach (var d in Enum.GetValues<Core.Enums.DifficultyLevel>())
+                {
+                    <button class="toggle-btn @(_request.DifficultyLevel == d ? "active" : "")"
+                            @onclick="() => _request.DifficultyLevel = d">
+                        @d
+                    </button>
+                }
             </div>
         </div>
         <div class="form-group">
             <label class="form-label">MCQ Count</label>
             <div class="count-control">
-                <button class="count-btn" @onclick="() => _request.mcqCount = (byte)Math.Max(0, (_request.mcqCount ?? 1) - 1)">−</button>
-                <span class="count-val">@_request.mcqCount</span>
-                <button class="count-btn" @onclick="() => _request.mcqCount++">+</button>
+                <button class="count-btn" @onclick="() => _request.McqCount = (byte)Math.Max(0, (_request.McqCount ?? 1) - 1)">−</button>
+                <span class="count-val">@_request.McqCount</span>
+                <button class="count-btn" @onclick="() => _request.McqCount++">+</button>
             </div>
         </div>
         <div class="form-group">
             <label class="form-label">Short Answer Count</label>
             <div class="count-control">
-                <button class="count-btn" @onclick="() => _request.shortAnswerCount = (byte)Math.Max(0, (_request.shortAnswerCount ?? 1) - 1)">−</button>
-                <span class="count-val">@_request.shortAnswerCount</span>
-                <button class="count-btn" @onclick="() => _request.shortAnswerCount++">+</button>
+                <button class="count-btn" @onclick="() => _request.ShortAnswerCount = (byte)Math.Max(0, (_request.ShortAnswerCount ?? 1) - 1)">−</button>
+                <span class="count-val">@_request.ShortAnswerCount</span>
+                <button class="count-btn" @onclick="() => _request.ShortAnswerCount++">+</button>
             </div>
         </div>
         <div class="form-group">
             <label class="form-label">Long Answer Count</label>
             <div class="count-control">
-                <button class="count-btn" @onclick="() => _request.longAnswerCount = (byte)Math.Max(0, (_request.longAnswerCount ?? 1) - 1)">−</button>
-                <span class="count-val">@_request.longAnswerCount</span>
-                <button class="count-btn" @onclick="() => _request.longAnswerCount++">+</button>
+                <button class="count-btn" @onclick="() => _request.LongAnswerCount = (byte)Math.Max(0, (_request.LongAnswerCount ?? 1) - 1)">−</button>
+                <span class="count-val">@_request.LongAnswerCount</span>
+                <button class="count-btn" @onclick="() => _request.LongAnswerCount++">+</button>
             </div>
         </div>
         <div class="form-group">
             <label class="form-label">Exam Duration</label>
-            <select class="form-control" @bind="_request.examDuration">
-                <option value="30">30 min</option><option value="45">45 min</option>
-                <option value="60">60 min</option><optionvalue="90">90 min</optionvalue>
-                <option value="120">120 min</option value="180"><option>180 min</option>
+            <select class="form-control"
+                    @bind="_request.ExamDuration">
+                <option value="30">30 min</option>
+                <option value="45">45 min</option>
+                <option value="60">60 min</option>
+                <option value="90">90 min</option>
+                <option value="120">120 min</option>
+                <option value="180">180 min</option>
             </select>
         </div>
         <div class="form-group">
             <label class="form-label">Total Marks</label>
-            <input class="form-control" type="number" @bind="_request.totalMarks" min="10" step="5" />
+            <input class="form-control" type="number" @bind="_request.TotalMarks" min="10" step="5" />
         </div>
 
         <div class="marks-summary">
-            <div class="marks-row"><span>MCQ (@_request.mcqCount × 1)</span><span class="marks-val">@_request.mcqCount</span></div>
-            <div class="marks-row"><span>Short Ans. (@_request.shortAnswerCount × 2)</span><span class="marks-val">@(_request.shortAnswerCount * 2)</span></div>
-            <div class="marks-row"><span>Long Ans. (@_request.longAnswerCount × 5)</span><span class="marks-val">@(_request.longAnswerCount * 5)</span></div>
+            <div class="marks-row"><span>MCQ (@_request.McqCount × 1)</span><span class="marks-val">@_request.McqCount</span></div>
+            <div class="marks-row"><span>Short Ans. (@_request.ShortAnswerCount × 2)</span><span class="marks-val">@(_request.ShortAnswerCount * 2)</span></div>
+            <div class="marks-row"><span>Long Ans. (@_request.LongAnswerCount × 5)</span><span class="marks-val">@(_request.LongAnswerCount * 5)</span></div>
             <div class="marks-row marks-total">
                 <span>Calculated Total</span>
-                <span class="marks-val">@(_request.mcqCount + _request.shortAnswerCount * 2 + _request.longAnswerCount * 5)</span>
+                <span class="marks-val">@(_request.McqCount + _request.ShortAnswerCount * 2 + _request.LongAnswerCount * 5)</span>
             </div>
         </div>
 
@@ -99,13 +112,16 @@
         {
             <div style="display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;height:300px">
                 <div style="font-size:18px;margin-bottom:10px;">🤖 AI is generating your question paper...</div>
-                @for (int i = 0; i < 4; i++) { <div class="skeleton" style="height:80px;border-radius:12px;width:80%"></div> }
+                @for (int i = 0; i < 4; i++)
+                {
+                    <div class="skeleton" style="height:80px;border-radius:12px;width:80%"></div>
+                }
             </div>
-        } 
+        }
         else if (_result is null)
         {
             <div class="empty-state">
-                <div class="empty-icon">📄</div>
+                <div class="empty-icon">📋</div>
                 <div class="empty-title">Question Paper Builder</div>
                 <div class="empty-sub">Configure counts, marks and duration to generate a complete exam paper</div>
             </div>
@@ -114,7 +130,7 @@
         {
             <div class="qp-paper-header">
                 <div class="qp-paper-title">MODEL QUESTION PAPER</div>
-                <div class="qp-paper-meta">@_request.subject · @_request.classLevel · @_request.difficultyLevel</div>
+                <div class="qp-paper-meta">@_request.Subject · @_request.ClassLevel · @_request.DifficultyLevel</div>
                 <div class="qp-paper-info">
                     <span>⏱ @_result.ExamInfo.ExamDuration</span>
                     <span>📝 Total Marks: @_result.ExamInfo.TotalMarks</span>
@@ -133,8 +149,8 @@
                 </div>
                 @for (int i = 0; i < _result.Sections.Mcq.Count; i++)
                 {
-                    <McqCard Question="@_result.Sections.Mcq[i]" Number="@(i+1)" RevisionMode="@(!_examMode)" />
-                } 
+                    <McqCard Question="@_result.Sections.Mcq[i]" Number="@(i + 1)" RevisionMode="@(!_examMode)" />
+                }
             }
 
             @if (_result?.Sections?.ShortAnswers?.Any() == true)
@@ -157,7 +173,10 @@
                             @if (q.KeyPoints.Any())
                             {
                                 <div class="sa-keypoints" style="margin-top:8px">
-                                    @foreach (var pt in q.KeyPoints) { <span class="keypoint">@pt</span> }
+                                    @foreach (var pt in q.KeyPoints)
+                                    {
+                                        <span class="keypoint">@pt</span>
+                                    }
                                 </div>
                             }
                         }
@@ -175,7 +194,7 @@
                 <div class="qp-section-header">
                     <span class="tag tag-purple">LA</span>
                     Section C — Long Answer
-                    <span class="qp-marks-note">@_result.Sections.LongAnswers.Count × 5 = @(_result.Sections.LongAnswers.Count*5) marks</span>
+                    <span class="qp-marks-note">@_result.Sections.LongAnswers.Count × 5 = @(_result.Sections.LongAnswers.Count * 5) marks</span>
                 </div>
                 @for (int i = 0; i < _result.Sections.LongAnswers.Count; i++)
                 {
@@ -200,74 +219,103 @@
 </div>
 
 @code {
-    private ContentGenerationRequest _request = new() { ContentType = Core.Enums.ContentGenerationType.QuestionPaper, difficultyLevel = Core.Enums.DifficultyLevel.Medium, classLevel = Core.Enums.EducationClass.Class6, mcqCount = 5, shortAnswerCount = 3, longAnswerCount = 2, examDuration = 60, totalMarks = 40 };
+    private ContentGenerationRequest _request = new() { ContentType = Core.Enums.ContentGenerationType.QuestionPaper, DifficultyLevel = Core.Enums.DifficultyLevel.Medium, ClassLevel = Core.Enums.EducationClass.Class6, McqCount = 5, ShortAnswerCount = 3, LongAnswerCount = 2, ExamDuration = 60, TotalMarks = 40 };
     private QuestionPaperResponse? _result;
     private bool _isLoading = false;
     private bool _examMode = true;
     private string _error = string.Empty;
-    private readonly string[] _grades = ["Class 6","Class 7","Class 8","Class 9","Class 10"];
 
     private async Task GenerateAsync()
     {
         _error = string.Empty;
-        if (string.IsNullOrWhiteSpace(_request.subject)) 
-        { 
+        if (string.IsNullOrWhiteSpace(_request.Subject))
+        {
             _error = "Please enter a subject.";
-            return; 
+            return;
         }
-        _isLoading = true; 
+        _isLoading = true;
         StateHasChanged();
 
-        _result = await ContentService.GenerateQuestionPaperAsync(_request);
-
-        var historyItem = new HistoryItem
+        try
         {
-            Type = "📋 Question Paper",
-            Title = $"{_request.subject}",
-            Content = $"MCQs: {_request.mcqCount}\nShort Answers: {_request.shortAnswerCount}\nLong Answers: {_request.longAnswerCount}\nTotal Marks: {_request.totalMarks}",
-            Time = DateTime.Now
-        };
+            _isLoading = true;
+            StateHasChanged();
 
-        var json = JsonSerializer.Serialize(historyItem);
-        await JS.InvokeVoidAsync("edugen.addHistoryItem", json);
+            _result = null;
+            _result = await ContentService.GenerateQuestionPaperAsync(_request);
 
-        _isLoading = false;
+            var historyItem = HistoryHelper.Create(
+                "📋 Question Paper",
+                _request.Subject,
+                "",
+                $"MCQs: {_request.McqCount}\nShort Answers: {_request.ShortAnswerCount}\nLong Answers: {_request.LongAnswerCount}\nTotal Marks: {_request.TotalMarks}"
+            );
+
+            var json = JsonSerializer.Serialize(historyItem);
+            await JS.InvokeVoidAsync("edugen.addHistoryItem", json);
+        }
+        catch
+        {
+            _error = "Failed to generate question paper. Please try again.";
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private string BuildQuestionPaperText()
     {
         if (_result == null) return string.Empty;
+
         var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"Subject: {_request.subject}");
-        sb.AppendLine($"Class: {_request.classLevel}");
-        sb.AppendLine($"Total Marks: {_request.totalMarks}");
-        sb.AppendLine($"Duration: {_request.examDuration} mins");
+
+        sb.AppendLine($"Subject: {_request.Subject}");
+        sb.AppendLine($"Class: {_request.ClassLevel}");
+        sb.AppendLine($"Total Marks: {_request.TotalMarks}");
+        sb.AppendLine($"Duration: {_request.ExamDuration} mins");
         sb.AppendLine();
+
         int i = 1;
+
         foreach (var q in _result.Sections.Mcq)
         {
-            sb.AppendLine($"Q{i++}. {q.question}");
-            sb.AppendLine($"A. {q.options[0]}");
-            sb.AppendLine($"B. {q.options[1]}");
-            sb.AppendLine($"C. {q.options[2]}");
-            sb.AppendLine($"D. {q.options[3]}");
-            sb.AppendLine($"A{i++}. {q.correctAnswer}");
+            sb.AppendLine($"Q{i}. {q.Question}");
+
+            for (int j = 0; j < q.Options.Count; j++)
+            {
+                sb.AppendLine($"{(char)('A' + j)}. {q.Options[j]}");
+            }
+
+            if (!_examMode)
+                sb.AppendLine($"Answer: {q.CorrectAnswer}");
+
             sb.AppendLine();
-    }
+            i++;
+        }
 
-    foreach (var q in _result.Sections.ShortAnswers)
-    {
-        sb.AppendLine($"Q{i++}. {q.Question}");
-        sb.AppendLine($"A{i++}. {q.Answer}");
-        sb.AppendLine();
-    }
+        foreach (var q in _result.Sections.ShortAnswers)
+        {
+            sb.AppendLine($"Q{i}. {q.Question}");
 
-    foreach (var q in _result.Sections.LongAnswers)
-    {
-        sb.AppendLine($"Q{i++}. {q.Question}");
-        sb.AppendLine($"A{i++}. {q.Answer}");
-        sb.AppendLine();
+            if (!_examMode)
+                sb.AppendLine($"Answer: {q.Answer}");
+
+            sb.AppendLine();
+            i++;
+        }
+
+        foreach (var q in _result.Sections.LongAnswers)
+        {
+            sb.AppendLine($"Q{i}. {q.Question}");
+
+            if (!_examMode)
+                sb.AppendLine($"Answer: {q.Answer}");
+
+            sb.AppendLine();
+            i++;
+        }
+
+        return sb.ToString();
     }
-    return sb.ToString();
-  }
 }

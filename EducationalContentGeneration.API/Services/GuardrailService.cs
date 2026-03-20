@@ -16,6 +16,8 @@ namespace EducationalContentGeneration.API.Services
 
         public async Task<int> GetPromptScoreAsync(string prompt)
         {
+            if(string.IsNullOrWhiteSpace(prompt)) throw new ArgumentException("Prompt cannot be null or empty", nameof(prompt));
+
             var promptTemplate = await _promptLoader.LoadAsync("guardrail");
 
             var function = _kernel.CreateFunctionFromPrompt(promptTemplate);
@@ -25,9 +27,15 @@ namespace EducationalContentGeneration.API.Services
                 ["prompt"] = prompt
             });
 
-            if (int.TryParse(result.ToString(), out int score)) return score;
+            var resultText = result.ToString();
 
-            return 0;
+            if (!int.TryParse(resultText, out int promptScore))
+            {
+                Console.WriteLine($"[Guardrail] Failed to parse score. LLM response: {resultText}");
+                return 0;
+            }
+
+            return promptScore;
         }
     }
 }

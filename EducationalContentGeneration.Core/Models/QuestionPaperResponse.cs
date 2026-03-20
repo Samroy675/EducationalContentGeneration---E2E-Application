@@ -30,7 +30,7 @@ namespace EducationalContentGeneration.Core.Models
         public List<McqQuestion> Mcq { get; set; } = new();
         [JsonPropertyName("ShortAnswers")]
         public List<ShortAnswerQuestion> ShortAnswers { get; set; } = new();
-        [JsonPropertyName("LomgAnswers")]
+        [JsonPropertyName("LongAnswers")]
         public List<LongAnswerQuestion> LongAnswers { get; set; } = new();
     }
 }

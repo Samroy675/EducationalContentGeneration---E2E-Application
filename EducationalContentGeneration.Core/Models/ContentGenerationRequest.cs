@@ -1,5 +1,6 @@
 ﻿using EducationalContentGeneration.Core.Enums;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace EducationalContentGeneration.Core.Models
 {
@@ -9,39 +10,52 @@ namespace EducationalContentGeneration.Core.Models
         public ContentGenerationType ContentType { get; set; }
 
         [Required]
-        public string subject { get; set; } = default!;
+        [JsonPropertyName("subject")]
+        public string Subject { get; set; } = default!;
 
         [Required]
-        public EducationClass classLevel { get; set; }
+        [JsonPropertyName("classLevel")]
+        public EducationClass ClassLevel { get; set; }
 
         [Required]
-        public DifficultyLevel difficultyLevel { get; set; }
+        [JsonPropertyName("difficultyLevel")]
+        public DifficultyLevel DifficultyLevel { get; set; }
 
-        public string? topic { get; set; }
-
-        [Range(0, 50)]
-        public int? numberOfQuestions { get; set; }
-
-        [Range(0, 50)]
-        public int? mcqCount { get; set; }
+        [JsonPropertyName("topic")]
+        public string? Topic { get; set; }
 
         [Range(0, 50)]
-        public int? shortAnswerCount { get; set; }
+        [JsonPropertyName("numberOfQuestions")]
+        public int? NumberOfQuestions { get; set; }
 
         [Range(0, 50)]
-        public int? longAnswerCount { get; set; }
+        [JsonPropertyName("mcqCount")]
+        public int? McqCount { get; set; }
+
+        [Range(0, 50)]
+        [JsonPropertyName("shortAnswerCount")]
+        public int? ShortAnswerCount { get; set; }
+
+        [Range(0, 50)]
+        [JsonPropertyName("longAnswerCount")]
+        public int? LongAnswerCount { get; set; }
 
         [Range(0, 100)]
-        public int? totalMarks { get; set; }
+        [JsonPropertyName("totalMarks")]
+        public int? TotalMarks { get; set; }
 
         [Range(0, 180)]
-        public int? examDuration { get; set; }
+        [JsonPropertyName("examDuration")]
+        public int? ExamDuration { get; set; }
 
-        public bool includeAnswers { get; set; } = true;
+        [JsonPropertyName("includeAnswers")]
+        public bool IncludeAnswers { get; set; } = true;
 
-        public string? question { get; set; }
+        [JsonPropertyName("question")]
+        public string? Question { get; set; }
 
-        public string? answer { get; set; }
+        [JsonPropertyName("answer")]
+        public string? Answer { get; set; }
 
     }
 }

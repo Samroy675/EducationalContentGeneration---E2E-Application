@@ -11,10 +11,12 @@ namespace EducationalContentGeneration.API.Services
     {
         private readonly Kernel _kernel;
         private readonly IServiceProvider _serviceProvider;
-        public KernelService(Kernel kernel, IServiceProvider serviceProvider)
+        private readonly ILogger<KernelService> _logger;
+        public KernelService(Kernel kernel, IServiceProvider serviceProvider, ILogger<KernelService> logger)
         {
             _kernel = kernel;
             _serviceProvider = serviceProvider;
+            _logger = logger;
 
             EnsurePluginsAdded();
         }
@@ -40,8 +42,7 @@ namespace EducationalContentGeneration.API.Services
 
             var result = await _kernel.InvokePromptAsync(prompt, new KernelArguments(settings));
 
-            Console.WriteLine(result);
-            Console.WriteLine(prompt);
+            _logger.LogInformation("Prompt executed {Prompt}", prompt);
 
             var responseText = result.GetValue<string>();
 
@@ -51,7 +52,7 @@ namespace EducationalContentGeneration.API.Services
             };
         }
 
-        public async Task<Object> GenerateContentAsync(ContentGenerationRequest request)
+        public async Task<object> GenerateContentAsync(ContentGenerationRequest request)
         {
             Type responseType = request.ContentType switch
             {
@@ -59,11 +60,11 @@ namespace EducationalContentGeneration.API.Services
                 ContentGenerationType.ShortAnswer => typeof(ShortAnswerResponse),
                 ContentGenerationType.LongAnswer => typeof(LongAnswerResponse),
                 ContentGenerationType.Explanation => typeof(ExplanationResponse),
-                ContentGenerationType.QuestionPaper => request.includeAnswers == true
+                ContentGenerationType.QuestionPaper => request.IncludeAnswers == true
                 ? typeof(QuestionPaperResponse)
                 : typeof(QuestionPaperNoAnswerResponse),
 
-                _ => throw new Exception("Unsupported Content Type")
+                _ => throw new InvalidOperationException("Unsupported content type.")
             };
 
             EnsurePluginsAdded();
@@ -78,7 +79,7 @@ namespace EducationalContentGeneration.API.Services
 
             var result = await _kernel.InvokePromptAsync(prompt, new KernelArguments(settings));
 
-            var responseText = result.GetValue<string>();
+            var responseText = result.GetValue<string>() ?? string.Empty;
 
             var responseObject = JsonSerializer.Deserialize(responseText, responseType)!;
 
@@ -87,46 +88,42 @@ namespace EducationalContentGeneration.API.Services
 
         private string BuildPrompt(ContentGenerationRequest request)
         {
-            request.subject ??= "General Subject";
-            request.topic ??= "General Topic";
-            if (request.classLevel == default)
-            {
-                request.classLevel = Core.Enums.EducationClass.Class6;
-            }
-            if (request.difficultyLevel == default)
-            {
-                request.difficultyLevel = Core.Enums.DifficultyLevel.Medium;
-            }
-            request.numberOfQuestions = request.numberOfQuestions <= 0 ? 1 : request.numberOfQuestions;
+            var subject = request.Subject ??= "General Subject";
+            var topic = request.Topic ??= "General Topic";
+            var classLevel = request.ClassLevel == default ? EducationClass.Class6 : request.ClassLevel;
+            var difficulty = request.ClassLevel == default ? DifficultyLevel.Medium : request.DifficultyLevel;
+            var count = request.NumberOfQuestions = request.NumberOfQuestions <= 0 ? 1 : request.NumberOfQuestions;
+            var includeAnswers = request.IncludeAnswers ? true : false;
 
-            var answerInstruction = (bool)request.includeAnswers! ? "Include correct answers and explanations for each question." : "Do NOT include answers or explanations. Generate only the questions";
+            var answerInstruction = includeAnswers 
+                ? "Include correct answers and explanations." 
+                : "Do NOT include answers.";
 
             return request.ContentType switch
             {
-                Core.Enums.ContentGenerationType.Mcq =>
-                $"Content type: MCQ. Generate {request.numberOfQuestions ?? 5} multiple choice Questions for Subject {request.subject} on Topic {request.topic} for class {request.classLevel} with difficulty {request.difficultyLevel}.",
+                ContentGenerationType.Mcq =>
+                $"Generate {count} MCQs for Subject {subject} on Topic {topic} for class {classLevel} with difficulty {difficulty}.",
 
-                Core.Enums.ContentGenerationType.ShortAnswer =>
-                $"Content type: ShortAnswer. Generate {request.numberOfQuestions} short Answer Questions for Subject {request.subject}  on Topic   {request.topic}   for class   {request.classLevel}   with difficulty  {request.difficultyLevel}.",
+                ContentGenerationType.ShortAnswer =>
+                $"Generate {count} short Answer questions for Subject {subject} on Topic {topic} for class {classLevel} with difficulty {difficulty}.",
 
-                Core.Enums.ContentGenerationType.LongAnswer =>
-                $"Content type: LongAnswer. Generate {request.numberOfQuestions} long Answer Questions for Subject {request.subject}  on Topic  {request.topic}  for class  {request.classLevel}  with difficulty  {request.difficultyLevel}.",
+                ContentGenerationType.LongAnswer =>
+                $"Generate {count} long Answer questions for Subject {subject} on Topic {topic} for class {classLevel} with difficulty {difficulty}.",
 
-                Core.Enums.ContentGenerationType.Explanation =>
-                $"Evaluate the following Answer. Subject {request.subject}, Question: {request.question}, Answer: {request.answer}.",
+                ContentGenerationType.Explanation =>
+                $"Evaluate this answer. Question: {request.Question}. Answer: {request.Answer}.",
 
-                Core.Enums.ContentGenerationType.QuestionPaper =>
-                $@"Generate a question paper for Subject {request.subject} 
-                for class {request.classLevel} with difficulty{request.difficultyLevel}. 
-
-                 Include {request.mcqCount} MCQs,
-                 {request.shortAnswerCount} Short Answer Questions,
-                 and {request.longAnswerCount} Long Answer Questions.
-
-                 Total marks {request.totalMarks}, duration {request.examDuration} minutes.
+                ContentGenerationType.QuestionPaper =>
+                $@"Generate a question paper for Subject {subject} 
+                (Class {classLevel}, difficulty{difficulty}). 
+                 Include:
+                 - {request.McqCount} MCQs
+                 - {request.ShortAnswerCount} short answers
+                 - {request.LongAnswerCount} long answers
+                 Total marks: {request.TotalMarks}, Duration: {request.ExamDuration} minutes.
                  {answerInstruction}",
 
-                _ => throw new Exception("Unsupported content type")
+                _ => throw new InvalidOperationException("Unsupported content type.")
             };
         }
     }

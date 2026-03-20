@@ -10,11 +10,16 @@
             <span class="tag @BadgeClass">@BadgeText</span>
         }
     </div>
+
     <div class="topbar-right">
         <div class="topbar-actions">
-            <button class="btn btn-ghost" @onclick="HandleCopy">📋 Copy</button>
+            @if (!string.IsNullOrWhiteSpace(ContentToCopy))
+            {
+                <button class="btn btn-ghost" @onclick="HandleCopy">📋 Copy</button>
+            }
             <button class="btn btn-ghost" @onclick="HandlePrint">🖨️ Print Draft</button>
         </div>
+
         <div class="avatar">R</div>
     </div>
 </div>
@@ -23,15 +28,21 @@
     [Parameter] public string Title { get; set; } = string.Empty;
     [Parameter] public string BadgeText { get; set; } = string.Empty;
     [Parameter] public string BadgeClass { get; set; } = "tag-green";
-    [Parameter] public bool ShowExportKey { get; set; } = false;
     [Parameter] public string? ContentToCopy { get; set; }
-    [Parameter] public EventCallback OnExport { get; set; }
 
     private async Task HandleCopy()
     {
-        if (!string.IsNullOrEmpty(ContentToCopy))
+        if (!string.IsNullOrWhiteSpace(ContentToCopy))
+        {
             await JS.InvokeVoidAsync("navigator.clipboard.writeText", ContentToCopy);
-        await JS.InvokeVoidAsync("edugen.showToast", "Copied to clipboard!");
+            await JS.InvokeVoidAsync("edugen.showToast", "Copied to clipboard!");
+        }
+        else
+        {
+            await JS.InvokeVoidAsync("edugen.showToast", "Nothing to copy!");
+        }
     }
-    private async Task HandlePrint() => await JS.InvokeVoidAsync("window.print");
+
+    private async Task HandlePrint()
+        => await JS.InvokeVoidAsync("window.print");
 }

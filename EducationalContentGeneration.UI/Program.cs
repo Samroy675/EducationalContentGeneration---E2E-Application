@@ -6,13 +6,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-// register service Mock or Api
+var apiBaseUrl = builder.Configuration["ApiBaseUrl"];
+
 builder.Services.AddHttpClient<ContentApiService>(client =>
 {
-    client.BaseAddress = new Uri("http://localhost:45581");
+    client.BaseAddress = new Uri(apiBaseUrl!);
 });
 
-builder.Services.AddServerSideBlazor().AddCircuitOptions(options => { options.DetailedErrors = true;  });
+builder.Services.AddServerSideBlazor()
+    .AddCircuitOptions(options =>
+    {
+        options.DetailedErrors = builder.Environment.IsDevelopment();
+    });
 
 var app = builder.Build();
 

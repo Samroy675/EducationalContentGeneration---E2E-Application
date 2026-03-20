@@ -16,11 +16,9 @@ namespace EducationalContentGeneration.Core.Prompting
             await using var stream = assembly.GetManifestResourceStream(resourceName);
             if (stream == null)
             {
-                // Helpful debug: list what's actually embedded
                 var available = string.Join("\n", assembly.GetManifestResourceNames());
                 throw new FileNotFoundException(
-                    $"Prompt '{promptName}' not found as an embedded resource. " +
-                    $"Tried: '{resourceName}'.\nAvailable:\n{available}");
+                    $"Prompt '{promptName}' not found as an embedded resource.");
             }
 
             using var reader = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);

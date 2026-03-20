@@ -5,18 +5,18 @@ namespace EducationalContentGeneration.Core.Models
     public class McqResponse
     {
         [JsonPropertyName("Questions")]
-        public List<McqQuestion> questions { get; set; } = new();
+        public List<McqQuestion> Questions { get; set; } = new();
     }
 
     public class McqQuestion
     {
         [JsonPropertyName("Question")]
-        public string question { get; set; } = string.Empty;
+        public string Question { get; set; } = string.Empty;
         [JsonPropertyName("Options")]
-        public List<string> options { get; set; } = new();
+        public List<string> Options { get; set; } = new();
         [JsonPropertyName("CorrectAnswer")]
-        public string correctAnswer { get; set; } = string.Empty;
+        public string CorrectAnswer { get; set; } = string.Empty;
         [JsonPropertyName("Explanation")]
-        public string explanation { get; set; } = string.Empty;
+        public string Explanation { get; set; } = string.Empty;
     }
 }

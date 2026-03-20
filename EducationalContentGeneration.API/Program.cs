@@ -21,39 +21,7 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "Educational Content Generator API using Semantic Kernel"
     });
-});
 
-// Prompt Loader (Scoped is correct if it eventually uses per-request items or DbContext)
-builder.Services.AddScoped<IPromptLoader, FilePromptLoader>();
-
-// Semantic Kernel 
-builder.Services.AddScoped<Kernel>(sp =>
-{
-    var config = sp.GetRequiredService<IConfiguration>();
-    var kernelBuilder = Kernel.CreateBuilder();
-
-    kernelBuilder.AddAzureOpenAIChatCompletion(
-        deploymentName: config["AzureOpenAI:DeploymentName"],
-        endpoint: config["AzureOpenAI:Endpoint"],
-        apiKey: config["AzureOpenAI:ApiKey"]
-    );
-
-    return kernelBuilder.Build();
-});
-
-// Kernel Service wrapper 
-builder.Services.AddScoped<GuardrailService>();
-builder.Services.AddScoped<KernelService>();
-builder.Services.AddScoped<ContentGenerationPlugin>();
-
-// Ensure enums are serialized as strings in JSON responses
-builder.Services.ConfigureHttpJsonOptions(options =>
-{
-    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
-});
-
-builder.Services.AddSwaggerGen(c =>
-{
     c.MapType<ContentGenerationType>(() => new OpenApiSchema
     {
         Type = "string",
@@ -82,14 +50,37 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddScoped<IPromptLoader, FilePromptLoader>();
+builder.Services.AddScoped<Kernel>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var kernelBuilder = Kernel.CreateBuilder();
+
+    kernelBuilder.AddAzureOpenAIChatCompletion(
+        deploymentName: config["AzureOpenAI:DeploymentName"],
+        endpoint: config["AzureOpenAI:Endpoint"],
+        apiKey: config["AzureOpenAI:ApiKey"]
+    );
+
+    return kernelBuilder.Build();
+});
+
+builder.Services.AddScoped<GuardrailService>();
+builder.Services.AddScoped<KernelService>();
+builder.Services.AddScoped<ContentGenerationPlugin>();
+
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "EducationalContentGeneration.API v1"));
+    app.UseSwaggerUI(c =>
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "EducationalContentGeneration.API v1"));
 }
 
 app.UseHttpsRedirection();

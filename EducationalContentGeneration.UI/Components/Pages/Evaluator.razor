@@ -1,25 +1,26 @@
 @page "/evaluator"
 @rendermode InteractiveServer
 @using EducationalContentGeneration.Core.Models
+@using EducationalContentGeneration.UI.Helpers
 @using EducationalContentGeneration.UI.Services
 @using System.Text.Json
 @inject IJSRuntime JS
 @inject ContentApiService ContentService
 
 <TopBar Title="Answer Explainer & Evaluator" BadgeText="Evaluator" BadgeClass="tag-amber"
-        ShowExportKey="true" ContentToCopy="@GetCopyContent()" />
+        ContentToCopy="@GetCopyContent()" />
 
 <div class="two-panel">
     <div class="form-panel">
         <div class="form-group">
             <label class="form-label">Question</label>
-            <textarea class="form-control" @bind="_request.question"    
+            <textarea class="form-control" @bind="_request.Question"    
                       placeholder="Enter the question to evaluate..."
                       style="resize:vertical;min-height:100px"></textarea>
         </div>
         <div class="form-group">
             <label class="form-label">Student's Answer</label>
-            <textarea class="form-control" @bind="_request.answer"
+            <textarea class="form-control" @bind="_request.Answer"
                       placeholder="Enter the student's answer here..."
                       style="resize:vertical;min-height:100px"></textarea>
         </div>
@@ -57,14 +58,14 @@
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
                     <span class="eval-card-title">Evaluation Result</span>
                     <span class="tag @(_result.Evaluation.Contains("Correct") ? "tag-green" : "tag-danger")">
-                        @(_result.Evaluation);
+                        @_result.Evaluation;
                     </span>
                 </div>
                 <div class="form-label" style="margin-bottom:6px">Question</div>
-                <div class="eval-q-text">@_request.question</div>
+                <div class="eval-q-text">@_request.Question</div>
                 <div class="form-label" style="margin-bottom:6px;margin-top:14px">Student's Answer</div>
-                <div class="eval-answer-box">@_request.answer</div>
-                <div class="eval-result @(_result.Evaluation?.Contains("Correct") ?? false) ? "eval-correct" : "eval-incorrect")">
+                <div class="eval-answer-box">@_request.Answer</div>
+                <div class="eval-result @((_result.Evaluation?.Contains("Correct") ?? false) ? "eval-correct" : "eval-incorrect")">
                     <div class="eval-result-label">@((_result.Evaluation?.Contains("Correct") ?? false) ? "✅ EXPLANATION" : "❌ CORRECTION NEEDED")</div>
                     <p class="eval-explanation">@_result.Explanation</p>
                 </div>
@@ -85,19 +86,19 @@
     private async Task EvaluateAsync()
     {
         _error = string.Empty;
-        if (string.IsNullOrWhiteSpace(_request.question) && (string.IsNullOrWhiteSpace(_request.answer)))
+        if (string.IsNullOrWhiteSpace(_request.Question) && string.IsNullOrWhiteSpace(_request.Answer))
         {
             _error = "Please enter a question and answer.";
             return;
         }
-        if (string.IsNullOrWhiteSpace(_request.question))
+        if (string.IsNullOrWhiteSpace(_request.Question))
         {
             _error = "Please enter a question.";
             return;
         }
-        if (string.IsNullOrWhiteSpace(_request.answer))
+        if (string.IsNullOrWhiteSpace(_request.Answer))
         {
-            _error = "Please enter a answer.";
+            _error = "Please enter an answer.";
             return;
         }
 
@@ -105,19 +106,15 @@
         {
             _isLoading = true;
             _result = null;
-
             _result = await ContentService.EvaluateAnswerAsync(_request);
 
-            var historyItem = new HistoryItem
-            {
-                Type = "💬 Evaluator",
-                Title = $"{_request.subject}",
-                Content = $"Evaluation: {_result.Evaluation}\n\nExplanation: {_result.Explanation}",
-                Time = DateTime.Now
-            };
+            var historyItem = HistoryHelper.Create("💬 Evaluator", _request.Question, "", $"Evaluation: {_result.Evaluation}\n\nExplanation: {_result.Explanation}");
 
             var json = JsonSerializer.Serialize(historyItem);
             await JS.InvokeVoidAsync("edugen.addHistoryItem", json);
+        }catch(Exception ex)
+        {
+            _error = "Failed to evaluate answer. Please try again.";
         }
         finally
         {

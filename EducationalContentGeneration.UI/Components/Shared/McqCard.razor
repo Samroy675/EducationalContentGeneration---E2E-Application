@@ -3,13 +3,13 @@
 
 <div class="q-card">
     <div class="q-num">Q@(Number)</div>
-    <div class="q-text">@Question.question</div>
+    <div class="q-text">@Question.Question</div>
 
     <div class="q-options">
-        @foreach (var (opt, idx) in Question.options.Select((o, i) => (o, i)))
+        @foreach (var (opt, idx) in Question.Options.Select((o, i) => (o, i)))
         {
             var letter = ((char)('A' + idx)).ToString();
-            var isCorrect = Question.correctAnswer.Trim().ToUpper() == letter;
+            var isCorrect = Question.CorrectAnswer.Trim().ToUpper() == letter;
             <div class="q-option @(isCorrect && _showAnswer ? "correct" : "")"
                  @onclick="() => SelectOption(letter)">
                 <span class="opt-letter @(isCorrect && _showAnswer ? "active" : "")">@letter</span>
@@ -22,15 +22,15 @@
     {
         <div class="answer-reveal">
             <span>✓</span>
-            <span>Answer: @Question.correctAnswer) </span>
+            <span>Answer: @Question.CorrectAnswer </span>
         </div>
     }
 
-    @if (_showExplanation && !string.IsNullOrEmpty(Question.explanation))
+    @if (_showExplanation && !string.IsNullOrEmpty(Question.Explanation))
     {
         <div class="explanation-box">
             <span class="explanation-label">💡 Explanation</span>
-            <p>@Question.explanation</p>
+            <p>@Question.Explanation</p>
         </div>
     }
 
@@ -56,22 +56,19 @@
 
     protected override void OnParametersSet()
     {
-        if (RevisionMode) _showAnswer = true;
+       _showAnswer = RevisionMode;
     }
 
-    private void SelectOption(string letter) { if (RevisionMode) _showAnswer = true; }
-
-    private string GetAnswerText()
+    private void SelectOption(string _)
     {
-        var idx = Question.correctAnswer.Trim().ToUpper()[0] - 'A';
-        return idx >= 0 && idx < Question.options.Count ? Question.options[idx] : "";
+        if (RevisionMode) _showAnswer = true; 
     }
 
     private async Task CopyQuestion()
     {
-        var text = $"Q{Number}: {Question.question}\n" +
-                   string.Join("\n", Question.options.Select((o, i) => $"  {(char)('A' + i)}) {o}")) +
-                   $"\nAnswer: {Question.correctAnswer}";
+        var text = $"Q{Number}: {Question.Question}\n" +
+                   string.Join("\n", Question.Options.Select((o, i) => $"  {(char)('A' + i)}) {o}")) +
+                   $"\nAnswer: {Question.CorrectAnswer}";
         await JS.InvokeVoidAsync("navigator.clipboard.writeText", text);
         await JS.InvokeVoidAsync("edugen.showToast", "Question copied!");
     }

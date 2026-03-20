@@ -1,4 +1,5 @@
 ﻿using EducationalContentGeneration.Core.Prompting;
+using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.AzureOpenAI;
 using System.ComponentModel;
@@ -9,16 +10,18 @@ namespace EducationalContentGeneration.Core.Plugins
     {
         private readonly IPromptLoader _promptLoader;
         private readonly Kernel _kernel;
+        private readonly ILogger<ContentGenerationPlugin> _logger;
 
         // We inject Kernel so we can invoke a semantic function
-        public ContentGenerationPlugin(IPromptLoader promptLoader, Kernel kernel)
+        public ContentGenerationPlugin(IPromptLoader promptLoader, Kernel kernel, ILogger<ContentGenerationPlugin> logger)
         {
             _promptLoader = promptLoader ?? throw new ArgumentNullException(nameof(promptLoader));
             _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
+            _logger = logger;
         }
 
         [KernelFunction("GenerateMcq")]
-        [Description("Use this function when the user requests multiple choicw Questions (MCQs). It generates Questions with four options and the correct Answer.")]
+        [Description("Generates multiple-choice questions (MCQs).")]
         public async Task<string> GenerateMcqAsync(
            string subject,
            string topic,
@@ -26,12 +29,7 @@ namespace EducationalContentGeneration.Core.Plugins
            string classLevel,
            int numberOfQuestions)
         {
-            //Basic backend-level validation
-            if (string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Subject cannot be empty.", nameof(subject));
-
-            if (string.IsNullOrWhiteSpace(topic)) throw new ArgumentException("Topic cannot be empty.", nameof(topic));
-
-            if (numberOfQuestions <= 0 || numberOfQuestions > 50) throw new ArgumentOutOfRangeException(nameof(numberOfQuestions), "Number of Questions must be between 1 and 50.");
+            ValidateCommon(subject, topic, numberOfQuestions);
 
             var template = await _promptLoader.LoadAsync("mcq");
 
@@ -46,14 +44,14 @@ namespace EducationalContentGeneration.Core.Plugins
 
             var response = await ExecutePromptAsync(template, args);
 
-            Console.WriteLine("\nJsonResponse");
-            Console.WriteLine(response);
+            _logger.LogInformation("Generated JSON response {Response}", response);
+            _logger.LogInformation("Generated response for {Function}", nameof(GenerateMcqAsync));
 
             return response!;
         }
 
         [KernelFunction("GenerateShortAnswer")]
-        [Description("Use this function when the user requests short Answer Questions that require brief responses or explanations.")]
+        [Description("Generates short answer questions.")]
         public async Task<string> GenerateShortAnswerAsync(
             string subject,
             string topic,
@@ -61,12 +59,7 @@ namespace EducationalContentGeneration.Core.Plugins
             string classLevel,
             int numberOfQuestions)
         {
-            //Basic backend-level validation
-            if (string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Subject cannot be empty.", nameof(subject));
-
-            if (string.IsNullOrWhiteSpace(topic)) throw new ArgumentException("Topic cannot be empty.", nameof(topic));
-
-            if (numberOfQuestions <= 0 || numberOfQuestions > 50) throw new ArgumentOutOfRangeException(nameof(numberOfQuestions), "Number of Questions must be between 1 and 50.");
+            ValidateCommon(subject, topic, numberOfQuestions);
 
             var template = await _promptLoader.LoadAsync("short-Answer");
 
@@ -81,14 +74,14 @@ namespace EducationalContentGeneration.Core.Plugins
 
             var response = await ExecutePromptAsync(template, args);
 
-            Console.WriteLine("\nJsonResponse");
-            Console.WriteLine(response);
+            _logger.LogInformation("Generated JSON response {Response}", response);
+            _logger.LogInformation("Generated response for {Function}", nameof(GenerateShortAnswerAsync));
 
             return response!;
         }
 
         [KernelFunction("GenerateLongAnswer")]
-        [Description("Use this function when the user requests long descriptions Questions that require detailed explanations or paragraph-length Answers.")]
+        [Description("Generates long answer questions.")]
         public async Task<string> GenerateLongAnswerAsync(
            string subject,
            string topic,
@@ -96,12 +89,7 @@ namespace EducationalContentGeneration.Core.Plugins
            string classLevel,
            int numberOfQuestions)
         {
-            //Basic backend-level validation
-            if (string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Subject cannot be empty.", nameof(subject));
-
-            if (string.IsNullOrWhiteSpace(topic)) throw new ArgumentException("Topic cannot be empty.", nameof(topic));
-
-            if (numberOfQuestions <= 0 || numberOfQuestions > 50) throw new ArgumentOutOfRangeException(nameof(numberOfQuestions), "Number of Questions must be between 1 and 50.");
+            ValidateCommon(subject, topic, numberOfQuestions);
 
             var template = await _promptLoader.LoadAsync("long-Answer");
 
@@ -116,26 +104,18 @@ namespace EducationalContentGeneration.Core.Plugins
 
             var response = await ExecutePromptAsync(template, args);
 
-            Console.WriteLine("\nJsonResponse");
-            Console.WriteLine(response);
+            _logger.LogInformation("Generated JSON response {Response}", response);
+            _logger.LogInformation("Generated response for {Function}", nameof(GenerateLongAnswerAsync));
 
             return response!;
         }
 
         [KernelFunction("EvaluateExplanation")]
-        [Description("Use this function when a student Answer needs to be evaluated. It checks whether the provided Answer is correct and explains the reasoning.")]
+        [Description("Evaluates an answer and provides explanation.")]
         public async Task<string> EvaluateExplanationAsync(
            string question, string answer)
         {
-            //minimal backend-level validation
-            if (string.IsNullOrWhiteSpace(question)) throw new ArgumentException("Question cannot be empty.", nameof(question));
-
-            if (string.IsNullOrWhiteSpace(answer)) throw new ArgumentException("Answer cannot be empty.", nameof(answer));
-
-            if (string.IsNullOrEmpty(question) || string.IsNullOrEmpty(answer))
-            {
-                throw new ArgumentException("Question and Answer are required for explanation generation");
-            }
+            ValidateExplanation(question, answer);
 
             var template = await _promptLoader.LoadAsync("explanation");
 
@@ -147,17 +127,16 @@ namespace EducationalContentGeneration.Core.Plugins
 
             var response = await ExecutePromptAsync(template, args);
 
-            Console.WriteLine("\nJsonResponse");
-            Console.WriteLine(response);
+            _logger.LogInformation("Generated JSON response {Response}", response);
+            _logger.LogInformation("Generated response for {Function}", nameof(EvaluateExplanationAsync));
 
             return response!;
         }
 
         [KernelFunction("BuildQuestionPaper")]
-        [Description("Use this function when the user wants a full exam Question paper containing MCQs, short Answer Questions, and long Answer Questions.")]
+        [Description("Generates a full question paper.")]
         public async Task<string> BuildQuestionPaperAsync(
            string subject,
-           string topic,
            string difficultyLevel,
            string classLevel,
            int mcqCount,
@@ -167,19 +146,13 @@ namespace EducationalContentGeneration.Core.Plugins
            string totalMarks,
            bool includeAnswers)
         {
-            //Basic backend-level validation
-            if (string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Subject cannot be empty.", nameof(subject));
-
-            if (string.IsNullOrWhiteSpace(topic)) throw new ArgumentException("Topic cannot be empty.", nameof(topic));
-
-            if (mcqCount < 0 || shortAnswerCount < 0 || longAnswerCount < 0) throw new ArgumentOutOfRangeException("Question counts cannot be negative.");
+            ValidateQuestionPaper(subject, mcqCount, shortAnswerCount, longAnswerCount);
 
             var template = await _promptLoader.LoadAsync("question-paper");
 
             var args = new KernelArguments
             {
                 ["subject"] = subject,
-                ["topic"] = topic,
                 ["difficultyLevel"] = difficultyLevel,
                 ["classLevel"] = classLevel,
                 ["mcqCount"] = mcqCount,
@@ -192,8 +165,8 @@ namespace EducationalContentGeneration.Core.Plugins
 
             var response = await ExecutePromptAsync(template, args);
 
-            Console.WriteLine("\nJsonResponse");
-            Console.WriteLine(response);
+            _logger.LogInformation("Generated JSON response {Response}", response);
+            _logger.LogInformation("Generated response for {Function}", nameof(BuildQuestionPaperAsync));
 
             return response!;
         }
@@ -216,7 +189,28 @@ namespace EducationalContentGeneration.Core.Plugins
             };
             var result = await _kernel.InvokePromptAsync(template, args);
 
+            _logger.LogInformation("Generated response for {Function}", nameof(ExecutePromptAsync));
+
             return result.GetValue<string>() ?? string.Empty;
+        }
+
+        private static void ValidateCommon(string subject, string topic, int numberOfQuestions)
+        {
+            if(string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Subject cannot be empty.", nameof(subject));
+            if (string.IsNullOrWhiteSpace(topic)) throw new ArgumentException("Topic cannot be empty.", nameof(topic));
+            if (numberOfQuestions <= 0 || numberOfQuestions > 50) throw new ArgumentOutOfRangeException(nameof(numberOfQuestions), "Must be between 1 and 50");
+        }
+
+        private static void ValidateExplanation(string question, string answer)
+        {
+            if(string.IsNullOrWhiteSpace(question)) throw new ArgumentException("Question cannot be empty.", nameof(question));
+            if(string.IsNullOrWhiteSpace(answer)) throw new ArgumentException("Answer cannot be empty.", nameof(answer));
+        }
+
+        private static void ValidateQuestionPaper(string subject, int mcq, int shortAns, int longAns)
+        {
+            if (string.IsNullOrWhiteSpace(subject)) throw new ArgumentException("Subject cannot be empty.", nameof(subject));
+            if (mcq < 0 || shortAns < 0 || longAns < 0) throw new ArgumentOutOfRangeException("Question counts cannot be negative.");
         }
     }
 }

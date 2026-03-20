@@ -1,4 +1,5 @@
-﻿using EducationalContentGeneration.Core.Models;
+﻿using Azure.Core;
+using EducationalContentGeneration.Core.Models;
 using System.Text.Json;
 
 namespace EducationalContentGeneration.UI.Services
@@ -11,106 +12,64 @@ namespace EducationalContentGeneration.UI.Services
             _httpClient = httpClient;
         }
 
-        public async Task<List<McqQuestion>> GenerateMcqAsync(ContentGenerationRequest req)
+        public async Task<List<McqQuestion>> GenerateMcqAsync(ContentGenerationRequest request)
         {
-            var response = await _httpClient.PostAsJsonAsync("/api/content/generate", req);
+            var result = await PostAsync<McqResponse>("/api/content/generate", request);
+            return result.Questions ?? new();
+        }
 
-            var json = await response.Content.ReadAsStringAsync();
+        public async Task<List<ShortAnswerQuestion>> GenerateShortAnswerAsync(ContentGenerationRequest request)
+        {
+            var result = await PostAsync<ShortAnswerResponse>("/api/content/generate", request);
+            return result.Questions ?? new();
+        }
 
-            if (json.Contains("message"))
-            {
-                var error = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-                throw new Exception(error?["message"]);
-            }
+        public async Task<List<LongAnswerQuestion>> GenerateLongAnswerAsync(ContentGenerationRequest request)
+        {
+            var result = await PostAsync<LongAnswerResponse>("/api/content/generate", request);
+            return result.Questions ?? new();
+        }
 
-            if (!response.IsSuccessStatusCode) throw new Exception("API request failed");
+        public async Task<ExplanationResponse> EvaluateAnswerAsync(ContentGenerationRequest request)
+        {
+            return await PostAsync<ExplanationResponse>("/api/content/generate", request);
+        }
 
-            var result = JsonSerializer.Deserialize<McqResponse>(json, new JsonSerializerOptions
+        public async Task<QuestionPaperResponse> GenerateQuestionPaperAsync(ContentGenerationRequest request)
+        {
+            return await PostAsync<QuestionPaperResponse>("/api/content/generate", request);
+        }
+
+        public async Task<PromptResponse> GeneratePromptAsync(PromptRequest req)
+        {
+            return await PostAsync<PromptResponse>("/api/content/prompt", req);
+        }
+
+        private async Task<T> PostAsync<T>(string url, object payload)
+        {
+            var response = await _httpClient.PostAsJsonAsync(url, payload);
+
+            var options = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true
-            });
+            };
 
-            return result?.questions ?? new List<McqQuestion>();
-        }
-
-        public async Task<List<ShortAnswerQuestion>> GenerateShortAnswerAsync(ContentGenerationRequest req)
-        {
-            var response = await _httpClient.PostAsJsonAsync("/api/content/generate", req);
-
-            var json = await response.Content.ReadAsStringAsync();
-
-            if (json.Contains("message"))
+            if(!response.IsSuccessStatusCode)
             {
-                var error = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-                throw new Exception(error?["message"]);
+                var errorJson = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    var error = JsonSerializer.Deserialize<Dictionary<string, string>>(errorJson, options);
+                    throw new HttpRequestException(error?["message"] ?? "API request failed");
+                }catch
+                {
+                    throw new HttpRequestException("API request failed");
+                }
             }
 
-            if (!response.IsSuccessStatusCode) throw new Exception("API request failed");
+            var result = await response.Content.ReadFromJsonAsync<T>(options);
 
-            var result = JsonSerializer.Deserialize<ShortAnswerResponse>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            return result?.Questions ?? new List<ShortAnswerQuestion>();
-        }
-
-        public async Task<List<LongAnswerQuestion>> GenerateLongAnswerAsync(ContentGenerationRequest req)
-        {
-            var response = await _httpClient.PostAsJsonAsync("/api/content/generate", req);
-
-            var json = await response.Content.ReadAsStringAsync();
-
-            if (json.Contains("message"))
-            {
-                var error = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-                throw new Exception(error?["message"]);
-            }
-
-            if (!response.IsSuccessStatusCode) throw new Exception("API request failed");
-
-            var result = JsonSerializer.Deserialize<LongAnswerResponse>(json, new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-
-            return result?.Questions ?? new List<LongAnswerQuestion>();
-        }
-
-        public async Task<ExplanationResponse> EvaluateAnswerAsync(ContentGenerationRequest req)
-        {
-            var response = await _httpClient.PostAsJsonAsync("/api/content/generate", req);
-
-            if (!response.IsSuccessStatusCode)
-                throw new Exception("API request failed");
-
-            var result = await response.Content.ReadFromJsonAsync<ExplanationResponse>();
-
-            return result ?? new ExplanationResponse();
-        }
-
-        public async Task<QuestionPaperResponse> GenerateQuestionPaperAsync(ContentGenerationRequest req)
-        {
-            var response = await _httpClient.PostAsJsonAsync("/api/content/generate", req);
-
-            if (!response.IsSuccessStatusCode)
-                throw new Exception("API request failed");
-
-            var result = await response.Content.ReadFromJsonAsync<QuestionPaperResponse>();
-
-            return result ?? new QuestionPaperResponse();
-        }
-
-        public async Task<PromptResponse> GeneratePromptAsync(PromptRequest request)
-        {
-            var response = await _httpClient.PostAsJsonAsync("/api/content/prompt", request);
-
-            if (!response.IsSuccessStatusCode)
-                throw new Exception("API request failed");
-
-            var result = await response.Content.ReadFromJsonAsync<PromptResponse>();
-
-            return result ?? new PromptResponse();
+            return result ?? throw new InvalidOperationException("Empty response from API");
         }
     }
 }

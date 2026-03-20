@@ -6,7 +6,6 @@
 <TopBar Title="History" BadgeText="H" BadgeClass="tag-purple" />
 
 <div class="two-panel">
-    <!---Left Panel---->
     <div class="form-panel">
 
         <div class="history-toolbar">
@@ -38,7 +37,6 @@
         }
     </div>
 
-<!----Right Preview Panel------>
     <div class="preview-panel">
 
         @if (_selectedItem == null)
@@ -83,23 +81,22 @@
         }
     }
 
-    private async Task SaveHistory()
-    {
-        var json = JsonSerializer.Serialize(_historyItems);
-        await JS.InvokeVoidAsync("edugen.saveHistory", json);
-    }
-
     private async Task DeleteHistory(string id)
     {
+        if (_selectedItem?.Id == id) _selectedItem = null;
         _historyItems.RemoveAll(x => x.Id == id);
-        var json = JsonSerializer.Serialize(_historyItems);
-        await JS.InvokeVoidAsync("localStorage.setItem", "edugen.history", json);
+        if(_historyItems != null)
+        {
+            var json = JsonSerializer.Serialize(_historyItems);
+            await JS.InvokeVoidAsync("edugen.saveHistory", json);    
+        }
     }
 
     private async Task ClearHistory()
     {
         _historyItems.Clear();
-        await JS.InvokeVoidAsync("localStorage.removeItem", "edugen.history");
+        await JS.InvokeVoidAsync("edugen.saveHistory", "[]");
+        _selectedItem = null;
     }
 
     private void SelectItem(HistoryItem item)

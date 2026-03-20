@@ -1,6 +1,7 @@
 @page "/long-answer"
 @rendermode InteractiveServer
 @using EducationalContentGeneration.Core.Models
+@using EducationalContentGeneration.UI.Helpers
 @using EducationalContentGeneration.UI.Models
 @using EducationalContentGeneration.UI.Services
 @using System.Text.Json
@@ -8,13 +9,13 @@
 @inject ContentApiService ContentService
 
 <TopBar Title="Long Answer Generator" BadgeText="LA" BadgeClass="tag-purple"
-        ShowExportKey="true" ContentToCopy="@GetCopyContent()" />
+        ContentToCopy="@GetCopyContent()" />
 
 <div class="stats-bar">
-    <div class="stat-item">Questions: <span class="stat-val">@_request.numberOfQuestions</span></div>
-    <div class="stat-item">Subject: <span class="stat-val">@(_request.subject.OrDash())</span></div>
-    <div class="stat-item">Grade: <span class="stat-val">@(_request.classLevel)</span></div>
-    <div class="stat-item">Difficulty: <span class="stat-val">@_request.difficultyLevel</span></div>
+    <div class="stat-item">Questions: <span class="stat-val">@_request.NumberOfQuestions</span></div>
+    <div class="stat-item">Subject: <span class="stat-val">@(_request.Subject)</span></div>
+    <div class="stat-item">Grade: <span class="stat-val">@(_request.ClassLevel)</span></div>
+    <div class="stat-item">Difficulty: <span class="stat-val">@_request.DifficultyLevel</span></div>
     @if (_questions.Count > 0)
     {
         <div class="stat-item" style="margin-left:auto">
@@ -27,15 +28,15 @@
     <div class="form-panel">
         <div class="form-group">
             <label class="form-label">Subject</label>
-            <input class="form-control" @bind="_request.subject" placeholder="e.g. Physics" />
+            <input class="form-control" @bind="_request.Subject" placeholder="e.g. Physics" />
         </div>
         <div class="form-group">
             <label class="form-label">Topic</label>
-            <input class="form-control" @bind="_request.topic" placeholder="e.g. Laws of Motion" />
+            <input class="form-control" @bind="_request.Topic" placeholder="e.g. Laws of Motion" />
         </div>
         <div class="form-group">
             <label class="form-label">Grade Level</label>
-            <select class="form-control" @bind="_request.classLevel">
+            <select class="form-control" @bind="_request.ClassLevel">
                 @foreach (var g in _grades) { <option value="@g">@g</option> }
             </select>
         </div>
@@ -44,17 +45,17 @@
             <div class="toggle-group">
                 @foreach (var d in Enum.GetValues<Core.Enums.DifficultyLevel>())
                 {
-                    <button class="toggle-btn @(_request.difficultyLevel == d ? "active" : "")"
-                            @onclick="() => _request.difficultyLevel = d">@d</button>
+                    <button class="toggle-btn @(_request.DifficultyLevel == d ? "active" : "")"
+                            @onclick="() => _request.DifficultyLevel = d">@d</button>
                 }
             </div>
         </div>
         <div class="form-group">
-            <label class="form-label">No. of Questions</label>
+            <label class="form-label">No of Questions</label>
             <div class="count-control">
-                <button class="count-btn" @onclick="() => _request.numberOfQuestions = (byte)Math.Max(1, (_request.numberOfQuestions ?? 1) - 1)">−</button>
-                <span class="count-val">@_request.numberOfQuestions</span>
-                <button class="count-btn" @onclick="() => _request.numberOfQuestions = (byte)Math.Min(30, (_request.numberOfQuestions ?? 1) + 1)">+</button>
+                <button class="count-btn" @onclick="() => _request.NumberOfQuestions = (byte)Math.Max(1, (_request.NumberOfQuestions ?? 1) - 1)">−</button>
+                <span class="count-val">@_request.NumberOfQuestions</span>
+                <button class="count-btn" @onclick="() => _request.NumberOfQuestions = (byte)Math.Min(30, (_request.NumberOfQuestions ?? 1) + 1)">+</button>
             </div>
         </div>
         <button class="generate-btn" @onclick="GenerateAsync" disabled="@_isLoading">
@@ -80,7 +81,7 @@
         else if (_questions.Count == 0)
         {
             <div class="empty-state">
-                <div class="empty-icon">≡</div>
+                <div class="empty-icon">📜</div>
                 <div class="empty-title">Long Answer Mode</div>
                 <div class="empty-sub">Detailed answers with structured explanation and real-world examples</div>
             </div>
@@ -89,9 +90,9 @@
         {
             <div class="preview-header">
                 <div class="preview-meta">
-                    <span class="tag tag-green">@_request.subject</span>
-                    <span class="tag tag-blue">@_request.classLevel</span>
-                    <span class="tag tag-amber">@_request.difficultyLevel</span>
+                    <span class="tag tag-green">@_request.Subject</span>
+                    <span class="tag tag-blue">@_request.ClassLevel</span>
+                    <span class="tag tag-amber">@_request.DifficultyLevel</span>
                 </div>
             </div>
             @for (int i = 0; i < _questions.Count; i++)
@@ -112,16 +113,17 @@
 </div>
 
 @code {
-    private ContentGenerationRequest _request = new() { ContentType = Core.Enums.ContentGenerationType.LongAnswer, numberOfQuestions = 3, difficultyLevel = Core.Enums.DifficultyLevel.Medium, classLevel = Core.Enums.EducationClass.Class6 };
-    private List<Core.Models.LongAnswerQuestion> _questions = new();
+    private ContentGenerationRequest _request = new() { ContentType = Core.Enums.ContentGenerationType.LongAnswer, NumberOfQuestions = 3, DifficultyLevel = Core.Enums.DifficultyLevel.Medium, ClassLevel = Core.Enums.EducationClass.Class6 };
+    private List<LongAnswerQuestion> _questions = new();
     private bool _isLoading = false;
     private string _error = string.Empty;
+    private string _clipboardText = string.Empty;
     private readonly string[] _grades = ["Class6","Class7","Class8","Class9","Class10"];
 
     private async Task GenerateAsync()
     {
         _error = string.Empty;
-        if (string.IsNullOrWhiteSpace(_request.subject))
+        if (string.IsNullOrWhiteSpace(_request.Subject))
         {
             _error = "Please enter a subject.";
             return;
@@ -134,21 +136,14 @@
         try
         {
             _questions = await ContentService.GenerateLongAnswerAsync(_request);
-            _error = "";
+            _clipboardText = GenerationHelper.BuildLongAnswerText(_questions);
         }
         catch (Exception ex)
         {
             _error = ex.Message;
         }
 
-        var historyItem = new HistoryItem
-        {
-            Type = "📜 Long Answer",
-            Title = $"{_request.subject} - {_request.topic}",
-            Content = string.Join("\n\n", _questions.Select((q, i) =>
-            $"Q{i + 1}. {q.Question}\n\nAnswer: {q.Answer}")),
-            Time = DateTime.Now
-        };
+        var historyItem = HistoryHelper.Create("📜 Long Answer", _request.Subject, _request.Topic!, _clipboardText);
 
         var json = JsonSerializer.Serialize(historyItem);
         await JS.InvokeVoidAsync("edugen.addHistoryItem", json);
@@ -158,9 +153,7 @@
     private string GetCopyContent()
     {
         if (_questions == null || !_questions.Any()) return string.Empty;
-
-        return string.Join("\n\n", _questions.Select((q, i) =>
-        $"Q{i + 1}.{q.Question}\nAnswer:{q.Answer}"));
+        return _clipboardText;
     }
 
     private async Task CopyQuestion(Core.Models.LongAnswerQuestion q, int num)

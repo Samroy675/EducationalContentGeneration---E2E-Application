@@ -45,15 +45,19 @@ window.edugen = {
     },
 
     addHistoryItem: function (itemJson) {
-        let history = localStorage.getItem("edugen-history");
+        let history = localStorage.getItem("edugen.history");
         let items = history ? JSON.parse(history) : [];
         items.unshift(JSON.parse(itemJson));
         items = items.slice(0, 20);
-        localStorage.setItem("edugen-history", JSON.stringify(items));
+        localStorage.setItem("edugen.history", JSON.stringify(items));
+    },
+
+    saveHistory: function (historyJson) {
+        localStorage.setItem("edugen.history", historyJson);
     },
 
      getHistory: function () {
-         return localStorage.getItem("edugen-history");
+         return localStorage.getItem("edugen.history");
     },
 
     removeHistoryitem: function (id) {
